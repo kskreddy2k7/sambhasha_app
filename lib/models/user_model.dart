@@ -2,48 +2,48 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
   final String uid;
-  final String name;
+  final String username;
   final String email;
-  final String? profilePhoto;
+  final String? photoURL;
   final String? bio;
+  final DateTime? createdAt;
   final bool isOnline;
   final DateTime lastSeen;
-  final String? pushToken;
 
   UserModel({
     required this.uid,
-    required this.name,
+    required this.username,
     required this.email,
-    this.profilePhoto,
+    this.photoURL,
     this.bio,
+    this.createdAt,
     this.isOnline = false,
     required this.lastSeen,
-    this.pushToken,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
-      name: map['name'] ?? '',
+      username: map['username'] ?? map['name'] ?? 'User',
       email: map['email'] ?? '',
-      profilePhoto: map['profilePhoto'],
-      bio: map['bio'],
+      photoURL: map['photoURL'] ?? map['profilePhoto'],
+      bio: map['bio'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       isOnline: map['isOnline'] ?? false,
-      lastSeen: (map['lastSeen'] as Timestamp).toDate(),
-      pushToken: map['pushToken'],
+      lastSeen: (map['lastSeen'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
-      'name': name,
+      'username': username,
       'email': email,
-      'profilePhoto': profilePhoto,
+      'photoURL': photoURL,
       'bio': bio,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'isOnline': isOnline,
       'lastSeen': Timestamp.fromDate(lastSeen),
-      'pushToken': pushToken,
     };
   }
 }

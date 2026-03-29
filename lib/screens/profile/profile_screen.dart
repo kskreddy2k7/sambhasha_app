@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -17,73 +16,83 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   bool _isEditing = false;
-  late DatabaseService _db;
-  late bool _isMe;
+  bool _isSaving = false;
 
   @override
-  void initState() {
-    super.initState();
-    _db = DatabaseService();
-    _isMe = FirebaseAuth.instance.currentUser!.uid == widget.uid;
+  void dispose() {
+    _usernameController.dispose();
+    _bioController.dispose();
+    super.dispose();
   }
 
-  Future<void> _updateProfile(UserModel user) async {
-    final updatedUser = UserModel(
-      uid: user.uid,
-      name: _nameController.text,
-      email: user.email,
-      bio: _bioController.text,
-      profilePhoto: user.profilePhoto,
-      isOnline: user.isOnline,
-      lastSeen: user.lastSeen,
-      pushToken: user.pushToken,
-    );
-    await _db.updateUserData(updatedUser);
-    setState(() => _isEditing = false);
-  }
-
-  Future<void> _pickImage(UserModel user) async {
+  Future<void> _pickAndUploadImage(DatabaseService db) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+
     if (pickedFile != null) {
-      String url = await _db.uploadMedia(File(pickedFile.path), 'profile_photos');
-      final updatedUser = UserModel(
-        uid: user.uid,
-        name: user.name,
-        email: user.email,
-        bio: user.bio,
-        profilePhoto: url,
-        isOnline: user.isOnline,
-        lastSeen: user.lastSeen,
-        pushToken: user.pushToken,
-      );
-      await _db.updateUserData(updatedUser);
+      setState(() => _isSaving = true);
+      try {
+        String url = await db.uploadImage(File(pickedFile.path));
+        await db.updateProfile(photoURL: url);
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+      if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Future<void> _saveProfile(DatabaseService db) async {
+    setState(() => _isSaving = true);
+    try {
+      await db.updateProfile(
+        username: _usernameController.text.trim(),
+        bio: _bioController.text.trim(),
+      );
+      setState(() => _isEditing = false);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+    if (mounted) setState(() => _isSaving = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final db = Provider.of<DatabaseService>(context);
+    final auth = Provider.of<AuthService>(context);
+    final bool isMe = auth.currentUser?.uid == widget.uid;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
-          if (_isMe)
+          if (isMe)
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () => Provider.of<AuthService>(context, listen: false).logout(),
+              onPressed: () => auth.logout(),
             ),
         ],
       ),
-      body: StreamBuilder<UserModel>(
-        stream: _db.getUserData(widget.uid),
+      body: StreamBuilder<UserModel?>(
+        stream: db.getUserData(widget.uid),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          final user = snapshot.data!;
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return const Center(child: Text('Something went wrong'));
+          }
+
+          final user = snapshot.data;
+          if (user == null) {
+            return const Center(child: Text('User not found'));
+          }
+
           if (!_isEditing) {
-            _nameController.text = user.name;
+            _usernameController.text = user.username;
             _bioController.text = user.bio ?? '';
           }
 
@@ -91,79 +100,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                GestureDetector(
-                  onTap: _isMe ? () => _pickImage(user) : null,
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 64,
-                        backgroundImage: user.profilePhoto != null
-                            ? NetworkImage(user.profilePhoto!)
-                            : null,
-                        child: user.profilePhoto == null
-                            ? const Icon(Icons.person, size: 64)
-                            : null,
-                      ),
-                      if (_isMe)
-                        const Positioned(
-                          bottom: 0,
-                          right: 4,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.blueAccent,
-                            child: Icon(Icons.edit, size: 18, color: Colors.white),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 64,
+                      backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                      backgroundImage: user.photoURL != null ? NetworkImage(user.photoURL!) : null,
+                      child: user.photoURL == null
+                          ? Text(user.username[0].toUpperCase(), style: const TextStyle(fontSize: 40))
+                          : null,
+                    ),
+                    if (isMe)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.blueAccent,
+                          radius: 18,
+                          child: IconButton(
+                            icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                            onPressed: _isSaving ? null : () => _pickAndUploadImage(db),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 24),
-                _isEditing
-                    ? TextField(
-                        controller: _nameController,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(hintText: 'Name'),
-                      )
-                    : Text(
-                        user.name,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                const SizedBox(height: 8),
-                Text(user.email, style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 16),
-                _isEditing
-                    ? TextField(
-                        controller: _bioController,
-                        maxLines: 3,
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(hintText: 'Bio'),
-                      )
-                    : Text(
-                        user.bio ?? 'No bio available',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                const SizedBox(height: 32),
-                if (_isMe)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_isEditing) {
-                          _updateProfile(user);
-                        } else {
-                          setState(() => _isEditing = true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isEditing ? Colors.green : Colors.blueAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: Text(_isEditing ? 'Save Changes' : 'Edit Profile'),
-                    ),
+                if (_isEditing) ...[
+                  TextField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(labelText: 'Username'),
                   ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _bioController,
+                    decoration: const InputDecoration(labelText: 'Bio'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() => _isEditing = false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _isSaving ? null : () => _saveProfile(db),
+                        child: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Text(user.username, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(user.email, style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  Text(user.bio?.isEmpty ?? true ? 'No bio' : user.bio!, textAlign: TextAlign.center),
+                  const SizedBox(height: 32),
+                  if (isMe)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => setState(() => _isEditing = true),
+                        child: const Text('Edit Profile'),
+                      ),
+                    ),
+                ],
               ],
             ),
           );

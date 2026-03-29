@@ -9,7 +9,6 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-
   User? get currentUser => _auth.currentUser;
 
   Future<String?> signUp({
@@ -20,7 +19,7 @@ class AuthService {
     try {
       final usernameCheck = await _firestore
           .collection('users')
-          .where('name', isEqualTo: username)
+          .where('username', isEqualTo: username)
           .get();
 
       if (usernameCheck.docs.isNotEmpty) {
@@ -32,10 +31,8 @@ class AuthService {
         password: password,
       );
 
-      User? user = result.user;
-
-      if (user != null) {
-        await _saveUserToFirestore(user, username);
+      if (result.user != null) {
+        await _saveUserToFirestore(result.user!, username);
       }
       return null;
     } on FirebaseAuthException catch (e) {
@@ -50,7 +47,10 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      UserCredential result = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      if (result.user != null) {
+        await _updateLastSeen(result.user!.uid);
+      }
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
@@ -71,17 +71,15 @@ class AuthService {
       );
 
       UserCredential result = await _auth.signInWithCredential(credential);
-      User? user = result.user;
-
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (result.user != null) {
+        final doc = await _firestore.collection('users').doc(result.user!.uid).get();
         if (!doc.exists) {
-          await _saveUserToFirestore(user, user.displayName ?? 'User_${user.uid.substring(0, 5)}');
+          await _saveUserToFirestore(result.user!, result.user!.displayName ?? 'User_${result.user!.uid.substring(0, 5)}');
+        } else {
+          await _updateLastSeen(result.user!.uid);
         }
       }
       return null;
-    } on FirebaseAuthException catch (e) {
-      return e.message;
     } catch (e) {
       return e.toString();
     }
@@ -97,50 +95,56 @@ class AuthService {
       verificationCompleted: (PhoneAuthCredential credential) async {
         await _auth.signInWithCredential(credential);
       },
-      verificationFailed: (FirebaseAuthException e) {
-        onError(e.message ?? 'Verification failed');
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        onCodeSent(verificationId);
-      },
+      verificationFailed: (FirebaseAuthException e) => onError(e.message ?? 'Verification failed'),
+      codeSent: (String verificationId, int? resendToken) => onCodeSent(verificationId),
       codeAutoRetrievalTimeout: (String verificationId) {},
     );
   }
 
   Future<String?> signInWithPhone(String verificationId, String smsCode) async {
     try {
-      final AuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: verificationId,
-        smsCode: smsCode,
-      );
+      final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
       UserCredential result = await _auth.signInWithCredential(credential);
-      User? user = result.user;
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (result.user != null) {
+        final doc = await _firestore.collection('users').doc(result.user!.uid).get();
         if (!doc.exists) {
-          await _saveUserToFirestore(user, 'User_${user.uid.substring(0, 5)}');
+          await _saveUserToFirestore(result.user!, 'User_${result.user!.uid.substring(0, 5)}');
         }
       }
       return null;
-    } on FirebaseAuthException catch (e) {
-      return e.message;
     } catch (e) {
       return e.toString();
     }
   }
 
-  Future<void> _saveUserToFirestore(User user, String name) async {
+  Future<void> _saveUserToFirestore(User user, String username) async {
     UserModel userModel = UserModel(
       uid: user.uid,
-      name: name,
+      username: username,
       email: user.email ?? '',
+      photoURL: user.photoURL,
+      bio: '',
+      createdAt: DateTime.now(),
+      isOnline: true,
       lastSeen: DateTime.now(),
-      profilePhoto: user.photoURL,
     );
     await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
   }
 
+  Future<void> _updateLastSeen(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'isOnline': true,
+      'lastSeen': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> logout() async {
+    if (currentUser != null) {
+      await _firestore.collection('users').doc(currentUser!.uid).update({
+        'isOnline': false,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+    }
     await _googleSignIn.signOut();
     await _auth.signOut();
   }

@@ -57,10 +57,10 @@ class HomeScreen extends StatelessWidget {
               final lastMsg = MessageModel.fromMap(lastMsgMap);
               final otherUserId = (chatData['users'] as List).firstWhere((id) => id != currentUserId);
 
-              return StreamBuilder<UserModel>(
+              return StreamBuilder<UserModel?>(
                 stream: db.getUserData(otherUserId),
                 builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) return const ListTile();
+                  if (!userSnapshot.hasData || userSnapshot.data == null) return const SizedBox();
                   final user = userSnapshot.data!;
 
                   return ListTile(
@@ -70,8 +70,8 @@ class HomeScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 28,
                           backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                          backgroundImage: user.profilePhoto != null ? NetworkImage(user.profilePhoto!) : null,
-                          child: user.profilePhoto == null ? Text(user.name[0], style: const TextStyle(fontSize: 20)) : null,
+                          backgroundImage: user.photoURL != null ? NetworkImage(user.photoURL!) : null,
+                          child: user.photoURL == null ? Text(user.username[0], style: const TextStyle(fontSize: 20)) : null,
                         ),
                         if (user.isOnline)
                           Positioned(
@@ -89,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                       ],
                     ),
-                    title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                    title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
                     subtitle: Row(
                       children: [
                         if (lastMsg.senderId == currentUserId) ...[
@@ -144,7 +144,9 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          // You might want to navigate to SearchScreen or Contacts here
+        },
         backgroundColor: Colors.blueAccent,
         child: const Icon(Icons.chat, color: Colors.white),
       ),
