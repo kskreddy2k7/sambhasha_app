@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:sambhasha_app/models/message_model.dart';
 import 'package:sambhasha_app/models/user_model.dart';
+import 'package:sambhasha_app/screens/call/call_screen.dart';
 import 'package:sambhasha_app/services/auth_service.dart';
+import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/widgets/chat_bubble.dart';
 import 'package:sambhasha_app/screens/chat/image_view_screen.dart';
@@ -71,6 +73,38 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _startCall(CallType type) async {
+    final callService = Provider.of<CallService>(context, listen: false);
+    try {
+      final callId = await callService.initiateCall(
+        receiverId: widget.receiver.uid,
+        type: type,
+      );
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CallScreen(
+              remoteUser: widget.receiver,
+              callId: callId,
+              callType: type,
+              isCaller: true,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not start call: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<DatabaseService>(context);
@@ -115,6 +149,18 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call_outlined),
+            onPressed: () => _startCall(CallType.voice),
+            tooltip: 'Voice call',
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam_outlined),
+            onPressed: () => _startCall(CallType.video),
+            tooltip: 'Video call',
+          ),
+        ],
       ),
       body: Column(
         children: [

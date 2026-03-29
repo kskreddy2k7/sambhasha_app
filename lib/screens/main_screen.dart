@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sambhasha_app/screens/call/incoming_call_screen.dart';
 import 'package:sambhasha_app/screens/home/home_screen.dart';
 import 'package:sambhasha_app/screens/profile/profile_screen.dart';
 import 'package:sambhasha_app/screens/search/search_screen.dart';
+import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,42 +19,68 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
-  final DatabaseService _db = DatabaseService();
+
+  // Track the callId currently shown to avoid duplicate navigation.
+  String? _activeIncomingCallId;
+  StreamSubscription<CallModel?>? _callSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _db.setUserOnlineStatus(true);
+    _setOnline(true);
+    _listenForIncomingCalls();
+  }
+
+  void _setOnline(bool isOnline) {
+    Provider.of<DatabaseService>(context, listen: false)
+        .setUserOnlineStatus(isOnline);
+  }
+
+  void _listenForIncomingCalls() {
+    final callService = Provider.of<CallService>(context, listen: false);
+    _callSub = callService.listenForIncomingCalls().listen((call) {
+      if (call == null || call.callId == _activeIncomingCallId || !mounted) {
+        return;
+      }
+      _activeIncomingCallId = call.callId;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => IncomingCallScreen(
+            call: call,
+            onCallEnded: () => _activeIncomingCallId = null,
+          ),
+        ),
+      ).then((_) => _activeIncomingCallId = null);
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _callSub?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _db.setUserOnlineStatus(true);
-    } else {
-      _db.setUserOnlineStatus(false);
-    }
+    _setOnline(state == AppLifecycleState.resumed);
   }
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SearchScreen(),
-    ProfileScreen(uid: FirebaseAuth.instance.currentUser!.uid),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    final screens = [
+      const HomeScreen(),
+      const SearchScreen(),
+      ProfileScreen(uid: uid),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

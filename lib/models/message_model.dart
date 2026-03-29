@@ -36,7 +36,7 @@ class MessageModel {
       receiverId: map['receiverId'] ?? '',
       message: map['message'] ?? '',
       type: MessageType.values.byName(map['type'] ?? 'text'),
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: MessageStatus.values.byName(map['status'] ?? 'delivered'),
       mediaUrl: map['mediaUrl'],
       fileName: map['fileName'],
