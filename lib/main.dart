@@ -5,13 +5,14 @@ import 'package:sambhasha_app/screens/auth/login_screen.dart';
 import 'package:sambhasha_app/screens/main_screen.dart';
 import 'package:sambhasha_app/screens/splash/splash_screen.dart';
 import 'package:sambhasha_app/services/auth_service.dart';
+import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/notification_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  
+
   final notificationService = NotificationService();
   await notificationService.init();
 
@@ -21,6 +22,10 @@ void main() async {
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<DatabaseService>(create: (_) => DatabaseService()),
         Provider<NotificationService>.value(value: notificationService),
+        Provider<CallService>(
+          create: (_) => CallService(),
+          dispose: (_, service) => service.dispose(),
+        ),
       ],
       child: const SambhashaApp(),
     ),

@@ -29,6 +29,7 @@ dependencies:
   uuid: ^4.4.0
   shared_preferences: ^2.3.2
   pinput: ^4.0.0
+  flutter_webrtc: ^0.9.47
 
 dev_dependencies:
   flutter_test:
