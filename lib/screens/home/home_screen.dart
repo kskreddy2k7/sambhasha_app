@@ -223,7 +223,7 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.chat_bubble_outline,
-              size: 100, color: Color(0xFF2A2A2A)),
+              size: 100, color: Colors.grey[800]),
           SizedBox(height: 24),
           Text('No conversations yet',
               style: TextStyle(

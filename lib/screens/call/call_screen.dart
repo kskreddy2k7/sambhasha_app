@@ -49,6 +49,8 @@ class _CallScreenState extends State<CallScreen> {
     _initRenderers();
     _listenStreams();
     _startTimer();
+    // Default to speakerphone on during calls
+    Helper.setSpeakerphoneOn(true);
   }
 
   Future<void> _initRenderers() async {
@@ -74,6 +76,7 @@ class _CallScreenState extends State<CallScreen> {
         });
         // Auto-pop when remote hangs up (stream clears after being connected)
         if (wasConnected && stream == null && mounted) {
+          Helper.setSpeakerphoneOn(false);
           Navigator.of(context).pop();
         }
       }
@@ -93,6 +96,7 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _endCall() async {
+    Helper.setSpeakerphoneOn(false);
     await _callService.endCall(widget.callId);
     if (mounted) Navigator.of(context).pop();
   }
@@ -305,7 +309,11 @@ class _CallScreenState extends State<CallScreen> {
         _controlButton(
           icon: _speakerOn ? Icons.volume_up : Icons.hearing,
           label: _speakerOn ? 'Speaker' : 'Earpiece',
-          onTap: () => setState(() => _speakerOn = !_speakerOn),
+          onTap: () {
+            final newValue = !_speakerOn;
+            Helper.setSpeakerphoneOn(newValue);
+            setState(() => _speakerOn = newValue);
+          },
           active: _speakerOn,
         ),
       ],
