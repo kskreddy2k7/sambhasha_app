@@ -192,20 +192,20 @@ class _CallScreenState extends State<CallScreen> {
         CircleAvatar(
           radius: 72,
           backgroundColor: Colors.blueAccent.withOpacity(0.15),
-          backgroundImage: widget.remoteUser.photoURL != null
-              ? NetworkImage(widget.remoteUser.photoURL!)
-              : null,
-          child: widget.remoteUser.photoURL == null
-              ? Text(widget.remoteUser.username[0].toUpperCase(),
-                  style: const TextStyle(fontSize: 48, color: Colors.white))
-              : null,
-        ),
-        const SizedBox(height: 24),
-        Text(widget.remoteUser.username,
-            style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
+        backgroundImage: widget.remoteUser.profilePic.isNotEmpty
+            ? NetworkImage(widget.remoteUser.profilePic)
+            : null,
+        child: widget.remoteUser.profilePic.isEmpty
+            ? Text(widget.remoteUser.name[0].toUpperCase(),
+                style: const TextStyle(fontSize: 48, color: Colors.white))
+            : null,
+      ),
+      const SizedBox(height: 24),
+      Text(widget.remoteUser.name,
+          style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white)),
         const SizedBox(height: 8),
         Text(
           _isConnected ? _formattedDuration : 'Connecting…',
@@ -229,16 +229,16 @@ class _CallScreenState extends State<CallScreen> {
           children: [
             CircleAvatar(
               radius: 56,
-              backgroundImage: widget.remoteUser.photoURL != null
-                  ? NetworkImage(widget.remoteUser.photoURL!)
+              backgroundImage: widget.remoteUser.profilePic.isNotEmpty
+                  ? NetworkImage(widget.remoteUser.profilePic)
                   : null,
-              child: widget.remoteUser.photoURL == null
-                  ? Text(widget.remoteUser.username[0].toUpperCase(),
+              child: widget.remoteUser.profilePic.isEmpty
+                  ? Text(widget.remoteUser.name[0].toUpperCase(),
                       style: const TextStyle(fontSize: 36))
                   : null,
             ),
             const SizedBox(height: 16),
-            Text(widget.remoteUser.username,
+            Text(widget.remoteUser.name,
                 style: const TextStyle(fontSize: 22, color: Colors.white)),
             const SizedBox(height: 8),
             const Text('Connecting…',
@@ -256,7 +256,7 @@ class _CallScreenState extends State<CallScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.remoteUser.username,
+        Text(widget.remoteUser.name,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

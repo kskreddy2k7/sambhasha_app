@@ -2,48 +2,57 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
   final String uid;
-  final String username;
-  final String email;
-  final String? photoURL;
-  final String? bio;
-  final DateTime? createdAt;
-  final bool isOnline;
+  final String phone;
+  final String name;
+  final String nameLowerCase;
+  final String profilePic;
+  final String bio;
   final DateTime lastSeen;
+  final bool isOnline;
+  final String publicKey;
 
   UserModel({
     required this.uid,
-    required this.username,
-    required this.email,
-    this.photoURL,
-    this.bio,
-    this.createdAt,
-    this.isOnline = false,
+    this.phone = '',
+    required this.name,
+    required this.nameLowerCase,
+    this.profilePic = '',
+    this.bio = '',
     required this.lastSeen,
+    required this.isOnline,
+    this.publicKey = '',
   });
+
+  // Backward-compatible getters
+  String get username => name;
+  String get photoURL => profilePic;
+  String get email => ""; 
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] ?? '',
-      username: map['username'] ?? map['name'] ?? 'User',
-      email: map['email'] ?? '',
-      photoURL: map['photoURL'] ?? map['profilePhoto'],
+      phone: map['phone'] ?? '',
+      name: map['name'] ?? '',
+      nameLowerCase: map['nameLowerCase'] ?? (map['name'] ?? '').toString().toLowerCase(),
+      profilePic: map['profilePic'] ?? '',
       bio: map['bio'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
-      isOnline: map['isOnline'] ?? false,
       lastSeen: (map['lastSeen'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isOnline: map['isOnline'] ?? false,
+      publicKey: map['publicKey'] ?? '',
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
-      'username': username,
-      'email': email,
-      'photoURL': photoURL,
+      'phone': phone,
+      'name': name,
+      'nameLowerCase': nameLowerCase,
+      'profilePic': profilePic,
       'bio': bio,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
-      'isOnline': isOnline,
       'lastSeen': Timestamp.fromDate(lastSeen),
+      'isOnline': isOnline,
+      'publicKey': publicKey,
     };
   }
 }

@@ -27,8 +27,8 @@ class IncomingCallScreen extends StatelessWidget {
           stream: db.getUserData(call.callerId),
           builder: (context, snapshot) {
             final caller = snapshot.data;
-            final callerName = caller?.username ?? 'Unknown';
-            final callerPhoto = caller?.photoURL;
+            final callerName = caller?.name ?? 'Unknown';
+            final callerPhoto = caller?.profilePic;
 
             return Column(
               children: [
@@ -38,10 +38,10 @@ class IncomingCallScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 72,
                   backgroundColor: Colors.blueAccent.withOpacity(0.15),
-                  backgroundImage: callerPhoto != null
+                  backgroundImage: (callerPhoto != null && callerPhoto.isNotEmpty)
                       ? NetworkImage(callerPhoto)
                       : null,
-                  child: callerPhoto == null
+                  child: (callerPhoto == null || callerPhoto.isEmpty)
                       ? Text(
                           callerName.isNotEmpty
                               ? callerName[0].toUpperCase()
@@ -123,8 +123,9 @@ class IncomingCallScreen extends StatelessWidget {
                                 remoteUser: caller ??
                                     UserModel(
                                       uid: call.callerId,
-                                      username: callerName,
-                                      email: '',
+                                      name: callerName,
+                                      phone: '',
+                                      profilePic: '',
                                       lastSeen: DateTime.now(),
                                     ),
                                 callId: call.callId,

@@ -1,76 +1,40 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:sambhasha_app/models/user_model.dart';
-import 'package:sambhasha_app/services/auth_service.dart';
-import 'package:sambhasha_app/services/database_service.dart';
-
-class ProfileScreen extends StatefulWidget {
-  final String uid;
-
-  const ProfileScreen({super.key, required this.uid});
-
-  @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
+import 'package:sambhasha_app/services/local_auth_service.dart';
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _isAppLockEnabled = false;
 
   @override
-  void dispose() {
-    _usernameController.dispose();
-    _bioController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadSettings();
   }
 
-  Future<void> _pickAndUploadImage(DatabaseService db) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
-
-    if (pickedFile != null) {
-      setState(() => _isSaving = true);
-      try {
-        String url = await db.uploadImage(File(pickedFile.path));
-        await db.updateProfile(photoURL: url);
-      } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  Future<void> _saveProfile(DatabaseService db) async {
-    setState(() => _isSaving = true);
-    try {
-      await db.updateProfile(
-        username: _usernameController.text.trim(),
-        bio: _bioController.text.trim(),
-      );
-      setState(() => _isEditing = false);
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-    if (mounted) setState(() => _isSaving = false);
+  void _loadSettings() async {
+    final lockService = LocalAuthService();
+    final enabled = await lockService.isLockEnabled();
+    setState(() => _isAppLockEnabled = enabled);
   }
 
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<DatabaseService>(context);
     final auth = Provider.of<AuthService>(context);
-    final bool isMe = auth.currentUser?.uid == widget.uid;
+    final currentUid = auth.currentUser?.uid;
+    final bool isMe = currentUid == widget.uid;
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Profile'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(isMe ? 'My Profile' : 'Profile'),
         actions: [
           if (isMe)
             IconButton(
-              icon: const Icon(Icons.logout),
+              icon: const Icon(Icons.logout, color: Colors.redAccent),
               onPressed: () => auth.logout(),
             ),
         ],
@@ -78,100 +42,158 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: StreamBuilder<UserModel?>(
         stream: db.getUserData(widget.uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong'));
-          }
-
-          final user = snapshot.data;
-          if (user == null) {
-            return const Center(child: Text('User not found'));
-          }
-
-          if (!_isEditing) {
-            _usernameController.text = user.username;
-            _bioController.text = user.bio ?? '';
-          }
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final user = snapshot.data!;
+          if (!_isEditing) _nameController.text = user.name;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 64,
-                      backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                      backgroundImage: user.photoURL != null ? NetworkImage(user.photoURL!) : null,
-                      child: user.photoURL == null
-                          ? Text(user.username[0].toUpperCase(), style: const TextStyle(fontSize: 40))
-                          : null,
-                    ),
-                    if (isMe)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: CircleAvatar(
-                          backgroundColor: Colors.blueAccent,
-                          radius: 18,
-                          child: IconButton(
-                            icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                            onPressed: _isSaving ? null : () => _pickAndUploadImage(db),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                const SizedBox(height: 20),
+                _buildProfileAvatar(user, isMe, db),
                 const SizedBox(height: 24),
-                if (_isEditing) ...[
-                  TextField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(labelText: 'Username'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _bioController,
-                    decoration: const InputDecoration(labelText: 'Bio'),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton(
-                        onPressed: () => setState(() => _isEditing = false),
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _isSaving ? null : () => _saveProfile(db),
-                        child: _isSaving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  Text(user.username, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(user.email, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 16),
-                  Text(user.bio?.isEmpty ?? true ? 'No bio' : user.bio!, textAlign: TextAlign.center),
-                  const SizedBox(height: 32),
-                  if (isMe)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => setState(() => _isEditing = true),
-                        child: const Text('Edit Profile'),
-                      ),
-                    ),
-                ],
+                _buildSocialStats(db, widget.uid),
+                const SizedBox(height: 32),
+                if (_isEditing) _buildEditForm(db) else _buildProfileInfo(user, isMe, db),
+                if (isMe) _buildSettingsSection(context),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildProfileAvatar(UserModel user, bool isMe, DatabaseService db) {
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent.withOpacity(0.5)]),
+          ),
+          child: CircleAvatar(
+            radius: 70,
+            backgroundColor: Colors.black,
+            backgroundImage: user.profilePic.isNotEmpty ? NetworkImage(user.profilePic) : null,
+            child: user.profilePic.isEmpty ? Text(user.name[0].toUpperCase(), style: const TextStyle(fontSize: 40)) : null,
+          ),
+        ),
+        if (isMe)
+          Positioned(bottom: 5, right: 5, child: _buildCameraButton(db)),
+      ],
+    );
+  }
+
+  Widget _buildCameraButton(DatabaseService db) {
+    return CircleAvatar(
+      backgroundColor: Colors.blueAccent,
+      radius: 20,
+      child: IconButton(
+        icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+        onPressed: _isSaving ? null : () => _pickAndUploadImage(db),
+      ),
+    );
+  }
+
+  Widget _buildSocialStats(DatabaseService db, String uid) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildStatItem("Followers", db.getFollowersCount(uid)),
+        _buildStatItem("Following", db.getFollowingCount(uid)),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String label, Stream<int> stream) {
+    return StreamBuilder<int>(
+      stream: stream,
+      builder: (context, snap) {
+        return Column(
+          children: [
+            Text("${snap.data ?? 0}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileInfo(UserModel user, bool isMe, DatabaseService db) {
+    return Column(
+      children: [
+        Text(user.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text(user.phone, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        const SizedBox(height: 24),
+        if (!isMe)
+          StreamBuilder<bool>(
+            stream: db.isFollowing(user.uid),
+            builder: (context, snap) {
+              final following = snap.data ?? false;
+              return SizedBox(
+                width: 200,
+                child: ElevatedButton(
+                  onPressed: () => following ? db.unfollowUser(user.uid) : db.followUser(user.uid),
+                  style: ElevatedButton.styleFrom(backgroundColor: following ? Colors.white10 : Colors.blueAccent),
+                  child: Text(following ? "Following" : "Follow"),
+                ),
+              );
+            },
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+               onPressed: () => setState(() => _isEditing = true),
+               child: const Text("Edit Profile"),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 40),
+        const Divider(color: Colors.white12),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Text("Privacy & Security", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+        ),
+        SwitchListTile(
+          title: const Text("App Lock (Biometric)"),
+          subtitle: const Text("Require fingerprint/PIN to open Sambhasha"),
+          value: _isAppLockEnabled,
+          activeColor: Colors.blueAccent,
+          onChanged: (val) async {
+            final lockService = LocalAuthService();
+            await lockService.setLockEnabled(val);
+            setState(() => _isAppLockEnabled = val);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditForm(DatabaseService db) {
+    return Column(
+      children: [
+        TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            TextButton(onPressed: () => setState(() => _isEditing = false), child: const Text('Cancel')),
+            ElevatedButton(onPressed: _isSaving ? null : () => _saveProfile(db), child: const Text('Save')),
+          ],
+        ),
+      ],
     );
   }
 }

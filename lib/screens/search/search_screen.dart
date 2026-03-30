@@ -19,7 +19,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    _debounce = Timer(const Duration(milliseconds: 300), () {
       setState(() {
         _searchQuery = query;
       });
@@ -38,37 +38,62 @@ class _SearchScreenState extends State<SearchScreen> {
     final db = Provider.of<DatabaseService>(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          onChanged: _onSearchChanged,
-          decoration: const InputDecoration(
-            hintText: 'Search by username...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white54),
+        toolbarHeight: 80,
+        backgroundColor: Colors.black,
+        elevation: 0,
+        title: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-          autofocus: true,
-        ),
-        actions: [
-          if (_searchController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
-                _onSearchChanged('');
-              },
+          child: TextField(
+            controller: _searchController,
+            onChanged: _onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Search people...',
+              border: InputBorder.none,
+              hintStyle: const TextStyle(color: Colors.white24),
+              prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+              suffixIcon: _searchController.text.isNotEmpty 
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 20, color: Colors.grey),
+                    onPressed: () {
+                      _searchController.clear();
+                      _onSearchChanged('');
+                    },
+                  )
+                : null,
             ),
-        ],
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+        ),
       ),
       body: _searchQuery.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search, size: 80, color: Colors.grey[800]),
-                  const SizedBox(height: 16),
-                  const Text('Search for users to start chatting', style: TextStyle(color: Colors.grey)),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.person_search_rounded, size: 100, color: Colors.blueAccent.withOpacity(0.2)),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Discover Users',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.9)),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Search for users to start a conversation',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ],
               ),
             )
@@ -76,35 +101,64 @@ class _SearchScreenState extends State<SearchScreen> {
               stream: db.searchUsers(_searchQuery),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
                 }
 
                 final users = snapshot.data ?? [];
 
                 if (users.isEmpty) {
-                  return const Center(child: Text('No users found'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off_rounded, size: 80, color: Colors.grey[800]),
+                        const SizedBox(height: 16),
+                        const Text('No users found', style: TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                  );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
                   itemCount: users.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final user = users[index];
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      leading: CircleAvatar(
-                        radius: 24,
-                        backgroundImage: user.photoURL != null ? NetworkImage(user.photoURL!) : null,
-                        child: user.photoURL == null ? Text(user.username[0].toUpperCase()) : null,
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.03),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.05)),
                       ),
-                      title: Text(user.username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(user.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ChatScreen(receiver: user)),
-                        );
-                      },
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        leading: Hero(
+                          tag: 'avatar_${user.uid}',
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundImage: user.profilePic.isNotEmpty ? NetworkImage(user.profilePic) : null,
+                            child: user.profilePic.isEmpty 
+                                ? Text(user.name[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)) 
+                                : null,
+                          ),
+                        ),
+                        title: Text(
+                          user.name, 
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          user.isOnline ? "Active now" : "Offline", 
+                          style: TextStyle(color: user.isOnline ? Colors.greenAccent : Colors.grey, fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.white24),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ChatScreen(otherUser: user)),
+                          );
+                        },
+                      ),
                     );
                   },
                 );

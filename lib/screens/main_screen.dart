@@ -1,10 +1,11 @@
 import 'dart:async';
-
+import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sambhasha_app/models/call_model.dart';
 import 'package:sambhasha_app/screens/call/incoming_call_screen.dart';
-import 'package:sambhasha_app/screens/home/home_screen.dart';
+import 'package:sambhasha_app/screens/chat/recent_chats_screen.dart';
 import 'package:sambhasha_app/screens/profile/profile_screen.dart';
 import 'package:sambhasha_app/screens/search/search_screen.dart';
 import 'package:sambhasha_app/services/call_service.dart';
@@ -72,47 +73,131 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
     final screens = [
-      const HomeScreen(),
-      const SearchScreen(),
+      const RecentChatsScreen(),
+      const DiscoverScreen(),
+      const AIAssistantScreen(),
       ProfileScreen(uid: uid),
     ];
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.black,
-          border: Border(top: BorderSide(color: Colors.grey[900]!, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isWide = constraints.maxWidth > 800;
+
+        return Scaffold(
           backgroundColor: Colors.black,
-          selectedItemColor: Colors.blueAccent,
-          unselectedItemColor: Colors.grey,
-          type: BottomNavigationBarType.fixed,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: (index) => setState(() => _currentIndex = index),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
-              label: 'Chats',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              activeIcon: Icon(Icons.search, size: 28),
-              label: 'Search',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+          extendBody: true,
+          body: Row(
+            children: [
+              if (isWide) _buildNavigationRail(),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: screens,
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: isWide ? null : _buildBottomBar(),
+        );
+      },
+    );
+  }
+
+  Widget _buildNavigationRail() {
+    return Container(
+      width: 80,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
+      ),
+      child: NavigationRail(
+        backgroundColor: Colors.transparent,
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        labelType: NavigationRailLabelType.none,
+        selectedIconTheme: const IconThemeData(color: Colors.blueAccent),
+        unselectedIconTheme: const IconThemeData(color: Colors.grey),
+        leading: const Column(
+          children: [
+            SizedBox(height: 20),
+            Icon(Icons.forum_rounded, color: Colors.blueAccent, size: 32),
+            SizedBox(height: 40),
           ],
+        ),
+        destinations: const [
+          NavigationRailDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: Text('Chats'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore),
+            label: Text('Discover'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: Text('AI'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: Text('Profile'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Container(
+      height: 70,
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: Colors.blueAccent,
+              unselectedItemColor: Colors.grey,
+              type: BottomNavigationBarType.fixed,
+              showSelectedLabels: false,
+              showUnselectedLabels: false,
+              onTap: (index) => setState(() => _currentIndex = index),
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  activeIcon: Icon(Icons.chat_bubble),
+                  label: 'Chats',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.explore_outlined),
+                  activeIcon: Icon(Icons.explore),
+                  label: 'Discover',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.auto_awesome_outlined),
+                  activeIcon: Icon(Icons.auto_awesome),
+                  label: 'AI',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

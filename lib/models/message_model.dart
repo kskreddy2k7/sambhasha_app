@@ -1,46 +1,49 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum MessageType { text, image, file }
+enum MessageType { text, image, file, voice, video }
 
-enum MessageStatus { sending, delivered, seen }
+enum MessageStatus { sent, delivered, seen }
 
 class MessageModel {
   final String messageId;
   final String senderId;
-  final String receiverId;
-  final String message;
+  final String text;
   final MessageType type;
   final DateTime timestamp;
+  final bool read;
   final MessageStatus status;
-  final String? mediaUrl;
-  final String? fileName;
-  final String? fileSize;
+  final bool isDeleted;
+  final String? replyToId;
+  final int? expiryDuration; // null = persistent, else seconds
 
   MessageModel({
     required this.messageId,
     required this.senderId,
-    required this.receiverId,
-    required this.message,
+    required this.text,
     required this.type,
     required this.timestamp,
-    required this.status,
-    this.mediaUrl,
-    this.fileName,
-    this.fileSize,
+    required this.read,
+    this.status = MessageStatus.sent,
+    this.isDeleted = false,
+    this.replyToId,
+    this.expiryDuration,
   });
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
     return MessageModel(
       messageId: map['messageId'] ?? '',
       senderId: map['senderId'] ?? '',
-      receiverId: map['receiverId'] ?? '',
-      message: map['message'] ?? '',
+      text: map['text'] ?? '',
       type: MessageType.values.byName(map['type'] ?? 'text'),
       timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      status: MessageStatus.values.byName(map['status'] ?? 'delivered'),
-      mediaUrl: map['mediaUrl'],
-      fileName: map['fileName'],
-      fileSize: map['fileSize'],
+      read: map['read'] ?? false,
+      status: MessageStatus.values.firstWhere(
+        (e) => e.name == (map['status'] ?? 'sent'),
+        orElse: () => MessageStatus.sent,
+      ),
+      isDeleted: map['isDeleted'] ?? false,
+      replyToId: map['replyToId'],
+      expiryDuration: map['expiryDuration'],
     );
   }
 
@@ -48,14 +51,14 @@ class MessageModel {
     return {
       'messageId': messageId,
       'senderId': senderId,
-      'receiverId': receiverId,
-      'message': message,
+      'text': text,
       'type': type.name,
       'timestamp': Timestamp.fromDate(timestamp),
+      'read': read,
       'status': status.name,
-      'mediaUrl': mediaUrl,
-      'fileName': fileName,
-      'fileSize': fileSize,
+      'isDeleted': isDeleted,
+      'replyToId': replyToId,
+      'expiryDuration': expiryDuration,
     };
   }
 }
