@@ -12,6 +12,9 @@ class AIService {
   late final ChatSession _chat;
 
   AIService() {
+    if (_apiKey.isEmpty) {
+      debugPrint('Warning: GEMINI_API_KEY is not set. AI features will be unavailable.');
+    }
     _model = GenerativeModel(
       model: 'gemini-pro',
       apiKey: _apiKey,
