@@ -1,80 +1,230 @@
-# Sambhasha: Best-in-Class Secure & AI-Powered Messaging Platform
+# Sambhasha — Secure, Production-Ready Full-Stack Chat & Calling App
 
-Sambhasha is a high-fidelity, production-ready messaging and social platform built with **Flutter**, **Firebase**, and **WebRTC**. This "Senior Expert" edition elevates communication with **Google Gemini Pro AI**, a robust **Social Graph**, and advanced **End-to-End Encryption (E2EE)**.
-
-## 🚀 Key "Expert Level" Features
-
-### 🤖 AI Intelligence (Gemini Pro)
-- **Sambhasha Buddy**: Immersive, glassmorphic AI Assistant chatbot for real-time guidance.
-- **Smart Replies**: Context-aware reply suggestions (Step 8) directly in the chat thread.
-- **AI Translation**: Real-time Instagram-style message translation for global connectivity.
-
-### 🌐 Social Networking & Graph [STEP 7]
-- **Followers & Following**: Robust social discovery system with real-time graph synchronization.
-- **Discover Screen**: Social exploration hub with "Suggested Users" and intelligent discovery list.
-- **Real-Time Presence**: Online/offline indicators and "Last Seen" updates.
-
-### 🔐 Security & Privacy [STEP 9]
-- **End-to-End Encryption (E2EE)**: Dual RSA-2048 and AES-256 encryption engine for ultimate message privacy.
-- **App Lock (Biometric)**: Secure entire platform access via Fingerprint, Face ID, or PIN.
-- **Disappearing Messages**: Ephemeral messaging with custom 1h/24h expiration and automated vanishing logic.
-- **Safety & Control**: Advanced Block and Report systems to maintain community integrity.
-
-### 📢 Media & Communication [STEP 3, 4, 10]
-- **HD Calling**: 100% working WebRTC implementation for high-quality peer-to-peer Voice and Video calls.
-- **Stories / Status**: Instagram-style 24-hour status updates with progress tracking and reactions.
-- **Multi-Media Hub**: Premium Audio Player for voice notes, along with image, video, and generic document sharing.
+Sambhasha is a multi-platform, production-ready messaging and calling platform built with:
+- **Flutter** (Android mobile app)
+- **React + Vite** (Web frontend → Vercel)
+- **Node.js + Socket.IO** (WebRTC Signaling Server → Render)
+- **Firebase** (Auth, Firestore, Storage, FCM)
 
 ---
 
-## 🛠️ Setup Instructions
+## 🚀 Features
 
-### 1. Firebase Configuration
-1. Create a Firebase Project at [console.firebase.google.com](https://console.firebase.google.com).
-2. Download `google-services.json` (`android/app/`).
-3. Configure **Firestore**, **Storage**, and **Auth** (Enable Phone & Google).
-4. **IMPORTANT**: Configure ReCaptcha in the Cloud Console for Web Phone Auth support.
+| Feature | Flutter App | Web App |
+|---------|------------|---------|
+| Google Sign-In | ✅ | ✅ |
+| Phone OTP Auth | ✅ | — |
+| Real-time Firestore Chat | ✅ | ✅ |
+| Typing Indicators | ✅ | ✅ |
+| Message Status (sent/delivered/seen) | ✅ | ✅ |
+| WebRTC Video & Audio Calling | ✅ | ✅ |
+| AI Assistant (Gemini Pro) | ✅ | — |
+| End-to-End Encryption | ✅ | — |
+| Push Notifications (FCM) | ✅ | — |
+| Stories/Status | ✅ | — |
+| Dark Mode | ✅ | ✅ |
 
-### 2. Environment Configuration (AI Integration)
-1. Obtain a **Google Gemini API Key** from the [Google AI Studio](https://aistudio.google.com/).
-2. In `lib/services/ai_service.dart`, replace the placeholder with your **Gemini API Key**:
-   ```dart
-   final String _apiKey = "YOUR_GEMINI_API_KEY";
-   ```
+---
 
-### 3. Deploy Security Rules
-1. Copy the contents of `firestore.rules` (included in the root) and paste them into the **Firestore > Rules** tab.
-2. Deploy **Firebase Storage Rules** to allow authorized user paths.
+## 🔐 Security
 
-### 4. Local Execution
-```bash
-# Sync dependencies
-flutter pub get
+- **No hardcoded API keys anywhere in the codebase.**
+- Flutter uses `String.fromEnvironment()` / `--dart-define` for all Firebase config.
+- Web app uses `VITE_FIREBASE_*` environment variables.
+- Signaling server uses `process.env.*` variables.
+- `google-services.json` and all `.env` files are excluded from git.
 
-# Run on Chrome (Web)
-flutter run -d chrome
+---
 
-# Run on Android
-flutter run -d android
+## 📁 Repository Structure
+
+```
+sambhasha_app/
+├── lib/                      # Flutter app source
+│   ├── firebase_options.dart # Firebase config via String.fromEnvironment
+│   ├── services/             # Auth, DB, Call, AI services
+│   ├── screens/              # All UI screens
+│   └── ...
+├── server/                   # Node.js WebRTC Signaling Server (→ Render)
+│   ├── server.js
+│   ├── package.json
+│   ├── render.yaml
+│   └── .env.example
+├── web-app/                  # React + Vite Web Frontend (→ Vercel)
+│   ├── src/
+│   │   ├── firebase.js       # Firebase init from env vars
+│   │   ├── components/       # LoginScreen, ChatList, ChatScreen, VideoCall
+│   │   ├── hooks/useWebRTC.js
+│   │   └── styles/globals.css
+│   ├── vercel.json
+│   └── .env.example
+├── android/                  # Android build files
+├── .env.example.json         # Flutter env vars template
+└── firestore.rules
 ```
 
 ---
 
-## 🏗️ Technical Stack
-- **Framework**: Flutter (Responsive Web + Android)
-- **AI Engine**: Google Generative AI (Gemini Pro)
-- **Real-Time Data**: Firebase Firestore (Streams)
-- **Signaling**: flutter_webrtc (Peer-to-Peer)
-- **Security**: POINTYCASTLE (RSA), ENCRYPT (AES), LOCAL_AUTH (Biometrics)
-- **UI Architecture**: Provider (State Management), Glassmorphism Design System
+## ⚙️ Setup
+
+### 1. Firebase Project
+
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
+2. Enable **Authentication** → Google Sign-In (and Phone for Flutter).
+3. Enable **Firestore Database** in production mode.
+4. Enable **Firebase Storage**.
+5. Add Android app (package: `com.sai.sambhasa_app`) and download `google-services.json` → place in `android/app/`.
+6. Add Web app and note your Firebase config values.
+7. Deploy Firestore rules: copy `firestore.rules` → Firestore > Rules.
 
 ---
 
-## 🏁 Verification Status (100% Feature-Complete)
-- **AI**: Verified Smart Replies, Chatbot, and Translation.
-- **Social**: Verified Followers/Following and Discover Feed.
-- **Security**: Verified RSA/AES E2EE and Biometric App Lock.
-- **Messaging**: Verified Text, Image, File, and Voice Note sharing.
-- **Calling**: Verified WebRTC Voice & Video call stability.
+### 2. Flutter Mobile App (Android APK)
 
-**Sambhasha is now feature-complete, secure, and production-ready.**
+Copy `.env.example.json` to `.env.json` and fill in your Firebase values:
+
+```json
+{
+  "FIREBASE_WEB_API_KEY": "AIzaSy...",
+  "FIREBASE_WEB_APP_ID": "1:...:web:...",
+  "FIREBASE_ANDROID_API_KEY": "AIzaSy...",
+  "FIREBASE_ANDROID_APP_ID": "1:...:android:...",
+  "FIREBASE_MESSAGING_SENDER_ID": "...",
+  "FIREBASE_PROJECT_ID": "your-project-id",
+  "FIREBASE_AUTH_DOMAIN": "your-project.firebaseapp.com",
+  "FIREBASE_STORAGE_BUCKET": "your-project.firebasestorage.app",
+  "FIREBASE_MEASUREMENT_ID": "G-...",
+  "GEMINI_API_KEY": "AIzaSy..."
+}
+```
+
+**Run / Build:**
+
+```bash
+# Install dependencies
+flutter pub get
+
+# Run on Android device/emulator
+flutter run --dart-define-from-file=.env.json
+
+# Build release APK
+flutter build apk --dart-define-from-file=.env.json --release
+
+# Run on Chrome (web)
+flutter run -d chrome --dart-define-from-file=.env.json
+```
+
+The APK will be at `build/app/outputs/flutter-apk/app-release.apk`.
+
+---
+
+### 3. Signaling Server (Render)
+
+```bash
+cd server
+cp .env.example .env
+# Edit .env: set ALLOWED_ORIGINS to your Vercel frontend URL
+```
+
+**Deploy to Render:**
+
+The `server/render.yaml` is pre-configured. Connect your GitHub repo to [render.com](https://render.com), select the `server/` root directory, and deploy. Environment variables to set in Render dashboard:
+
+| Variable | Value |
+|----------|-------|
+| `PORT` | Auto-assigned by Render |
+| `ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
+
+**Local development:**
+
+```bash
+cd server
+npm install
+npm run dev      # uses nodemon
+# or
+npm start        # production
+```
+
+Health check: `GET /health` → `{ status: "ok", rooms: N, uptime: ... }`
+
+---
+
+### 4. React Web App (Vercel)
+
+```bash
+cd web-app
+cp .env.example .env
+# Fill in your Firebase values and signaling server URL
+```
+
+`.env` contents:
+
+```env
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=1:...:web:...
+VITE_FIREBASE_MEASUREMENT_ID=G-...
+VITE_SIGNALING_SERVER_URL=https://your-signaling-server.onrender.com
+```
+
+**Local development:**
+
+```bash
+cd web-app
+npm install
+npm run dev
+```
+
+**Deploy to Vercel:**
+
+1. Push this repo to GitHub.
+2. Import project in [vercel.com](https://vercel.com) — set **Root Directory** to `web-app`.
+3. Add all `VITE_*` environment variables in Vercel project settings.
+4. Deploy. The `vercel.json` handles SPA routing fallback automatically.
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Mobile App | Flutter 3 + Dart |
+| Web Frontend | React 18 + Vite 5 |
+| State (Flutter) | Provider |
+| Auth | Firebase Authentication (Google, Phone) |
+| Database | Cloud Firestore (real-time) |
+| Storage | Firebase Storage |
+| Push Notifications | Firebase Cloud Messaging |
+| Video/Audio Calls | WebRTC (flutter_webrtc / browser RTCPeerConnection) |
+| Call Signaling | Socket.IO (Node.js server) / Firestore (Flutter) |
+| AI Features | Google Gemini Pro |
+| Encryption | RSA-2048 + AES-256 (Flutter) |
+| Backend Server | Node.js + Express + Socket.IO |
+| Deployment (web) | Vercel |
+| Deployment (server) | Render |
+
+---
+
+## 🔒 Security Notes
+
+- All API keys and secrets must be supplied via environment variables — never commit `.env` files.
+- Flutter reads credentials at build time via `--dart-define-from-file=.env.json`.
+- The `google-services.json` file is gitignored; obtain it from your Firebase console.
+- Firestore security rules (`firestore.rules`) enforce that users can only read/write their own data.
+- CORS on the signaling server is restricted to your frontend origin via `ALLOWED_ORIGINS`.
+
+---
+
+## 🐛 Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Firebase not initializing | Check all `FIREBASE_*` env vars are set and not placeholder values |
+| Google Sign-In fails on web | Ensure your domain is in Firebase → Auth → Authorized Domains |
+| WebRTC call not connecting | Ensure signaling server is running and `VITE_SIGNALING_SERVER_URL` is correct |
+| APK crashes on start | Verify `google-services.json` is in `android/app/` and matches your Firebase project |
+| Vercel 404 on refresh | `vercel.json` SPA fallback is included — ensure it is deployed with root in `web-app/` |
+

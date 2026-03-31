@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sambhasha-signaling-server
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is automatically set by Render; override only if self-hosting
+      # - key: PORT
+      #   value: 3001
+      - key: ALLOWED_ORIGINS
+        sync: false   # Set this in the Render dashboard — e.g. https://yourapp.com
