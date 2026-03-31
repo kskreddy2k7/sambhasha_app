@@ -1,3 +1,11 @@
+# Environment / secrets — NEVER commit real credentials
+.env
+.env.*
+!.env.example
+!.env.example.json
+*.env.json
+!.env.example.json
+
 # Miscellaneous
 *.class
 *.log
