@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pointycastle/api.dart';
 import 'package:pointycastle/asymmetric/api.dart';
 import 'package:pointycastle/key_generators/api.dart';
 import 'package:pointycastle/key_generators/rsa_key_generator.dart';
 import 'package:pointycastle/random/fortuna_random.dart';
 import 'dart:math';
+
 
 class EncryptionService {
   static const _storage = FlutterSecureStorage();
@@ -19,6 +21,7 @@ class EncryptionService {
         RSAKeyGeneratorParameters(BigInt.parse('65537'), 2048, 64),
         _getSecureRandom(),
       ));
+
 
     final pair = keyGen.generateKeyPair();
     final public = pair.publicKey as RSAPublicKey;
@@ -51,7 +54,8 @@ class EncryptionService {
   // 4. AES Decryption
   String decryptAES(String cipherText, String base64Key) {
     final parts = cipherText.split(':');
-    if (parts.length != 2) return plainText; // Fallback
+    if (parts.length != 2) return cipherText; // Fallback
+
     
     final iv = encrypt.IV.fromBase64(parts[0]);
     final encrypted = encrypt.Encrypted.fromBase64(parts[1]);

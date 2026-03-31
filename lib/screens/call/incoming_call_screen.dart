@@ -4,6 +4,8 @@ import 'package:sambhasha_app/models/user_model.dart';
 import 'package:sambhasha_app/screens/call/call_screen.dart';
 import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
+import 'package:sambhasha_app/models/call_model.dart';
+
 
 class IncomingCallScreen extends StatelessWidget {
   final CallModel call;
@@ -25,6 +27,8 @@ class IncomingCallScreen extends StatelessWidget {
       body: SafeArea(
         child: StreamBuilder<UserModel?>(
           stream: db.getUserData(call.callerId),
+
+
           builder: (context, snapshot) {
             final caller = snapshot.data;
             final callerName = caller?.name ?? 'Unknown';
@@ -123,11 +127,15 @@ class IncomingCallScreen extends StatelessWidget {
                                 remoteUser: caller ??
                                     UserModel(
                                       uid: call.callerId,
+
                                       name: callerName,
                                       phone: '',
                                       profilePic: '',
                                       lastSeen: DateTime.now(),
+                                      isOnline: true,
+                                      nameLowerCase: callerName.toLowerCase(),
                                     ),
+
                                 callId: call.callId,
                                 callType: call.type,
                                 isCaller: false,

@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/app/google-services.json
+
+# Local Analysis Logs
+analysis_*.txt
+*.txt
+

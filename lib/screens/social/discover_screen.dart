@@ -65,9 +65,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildSearchResults() {
-    return StreamBuilder<List<UserModel>>(
-      stream: _db.searchUsers(_query),
+    return FutureBuilder<List<UserModel>>(
+      future: _db.searchUsers(_query),
       builder: (context, snapshot) {
+
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final users = snapshot.data!;
         if (users.isEmpty) return const Center(child: Text("No users found", style: TextStyle(color: Colors.grey)));

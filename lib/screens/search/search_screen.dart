@@ -97,8 +97,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             )
-          : StreamBuilder<List<UserModel>>(
-              stream: db.searchUsers(_searchQuery),
+          : FutureBuilder<List<UserModel>>(
+              future: db.searchUsers(_searchQuery),
+
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));

@@ -179,6 +179,44 @@ class DatabaseService {
     await _firestore.collection('users').doc(currentUid).update({'isOnline': isOnline, 'lastSeen': FieldValue.serverTimestamp()});
   }
 
+  Future<void> setTypingStatus(String chatId, bool isTyping) async {
+    await _firestore.collection('chats').doc(chatId).update({
+      'typing.$currentUid': isTyping,
+    });
+  }
+
+  Future<List<UserModel>> searchUsers(String query) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .where('nameLowerCase', isGreaterThanOrEqualTo: query.toLowerCase())
+        .where('nameLowerCase', isLessThanOrEqualTo: '${query.toLowerCase()}\uf8ff')
+        .get();
+    return snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList();
+  }
+
+  Future<void> markAsDelivered(String chatId, String messageId) async {
+    await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'status': MessageStatus.delivered.name});
+  }
+
+  Future<void> deleteMessage(String chatId, String messageId) async {
+    await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'isDeleted': true, 'text': 'This message was deleted'});
+  }
+
+  Future<void> updateFCMToken(String token) async {
+    await _firestore.collection('users').doc(currentUid).update({'fcmToken': token});
+  }
+
+
   Stream<DocumentSnapshot> getChatStream(String chatId) => _firestore.collection('chats').doc(chatId).snapshots();
   
   Stream<List<DocumentSnapshot>> getRecentChats() {
@@ -190,6 +228,13 @@ class DatabaseService {
     UploadTask uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
     return await (await uploadTask).ref.getDownloadURL();
   }
+
+  Future<String> uploadFile(Uint8List bytes, String fileName) async {
+    Reference ref = _storage.ref().child('chat_files/${const Uuid().v4()}_$fileName');
+    UploadTask uploadTask = ref.putData(bytes);
+    return await (await uploadTask).ref.getDownloadURL();
+  }
+
 
   Future<void> markAsRead(String chatId) async {
     var snapshot = await _firestore.collection('chats').doc(chatId).collection('messages').where('senderId', isNotEqualTo: currentUid).where('read', isEqualTo: false).get();

@@ -4,39 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sambhasha_app/models/call_model.dart';
 
-enum CallType { voice, video }
 
-enum CallStatus { calling, accepted, rejected, ended, missed }
 
-class CallModel {
-  final String callId;
-  final String callerId;
-  final String receiverId;
-  final CallType type;
-  final CallStatus status;
-
-  const CallModel({
-    required this.callId,
-    required this.callerId,
-    required this.receiverId,
-    required this.type,
-    required this.status,
-  });
-
-  factory CallModel.fromMap(Map<String, dynamic> map, String id) {
-    return CallModel(
-      callId: id,
-      callerId: map['callerId'] as String? ?? '',
-      receiverId: map['receiverId'] as String? ?? '',
-      type: map['type'] == 'video' ? CallType.video : CallType.voice,
-      status: CallStatus.values.firstWhere(
-        (s) => s.name == (map['status'] as String? ?? 'calling'),
-        orElse: () => CallStatus.calling,
-      ),
-    );
-  }
-}
 
 class CallService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

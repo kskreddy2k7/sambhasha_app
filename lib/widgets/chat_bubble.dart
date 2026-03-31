@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sambhasha_app/services/ai_service.dart';
+import 'package:sambhasha_app/widgets/audio_player_widget.dart';
+
 
 class ChatBubble extends StatefulWidget {
   final MessageModel message;
@@ -60,7 +62,8 @@ class _ChatBubbleState extends State<ChatBubble> {
                   Navigator.pop(context);
                   final db = DatabaseService();
                   String id = widget.groupId ?? db.getChatId(widget.message.senderId);
-                  await db.deleteMessage(id, widget.message.messageId, false);
+                  await db.deleteMessage(id, widget.message.messageId);
+
                 },
               ),
               ListTile(
@@ -70,7 +73,8 @@ class _ChatBubbleState extends State<ChatBubble> {
                    Navigator.pop(context);
                    final db = DatabaseService();
                    String id = widget.groupId ?? db.getChatId(widget.message.senderId);
-                   await db.deleteMessage(id, widget.message.messageId, true);
+                   await db.deleteMessage(id, widget.message.messageId);
+
                 },
               ),
             ],

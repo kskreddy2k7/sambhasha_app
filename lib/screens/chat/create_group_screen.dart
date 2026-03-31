@@ -94,11 +94,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             child: Text("Select Members", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           Expanded(
-            child: StreamBuilder<List<UserModel>>(
-              // For simplicity, we search all users here. 
-              // In production, we might search contacts or recent chats.
-              stream: db.searchUsers(""), 
+            child: FutureBuilder<List<UserModel>>(
+              future: db.searchUsers(""), 
               builder: (context, snapshot) {
+
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }

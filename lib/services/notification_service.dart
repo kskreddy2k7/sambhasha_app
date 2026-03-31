@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sambhasha_app/services/database_service.dart';
+import 'package:sambhasha_app/models/call_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -65,7 +66,6 @@ class NotificationService {
           'High Importance Notifications',
           importance: Importance.max,
           priority: Priority.high,
-          showWhen: true,
         ),
       ),
     );
@@ -74,12 +74,13 @@ class NotificationService {
   Future<void> updateToken(String uid) async {
     String? token = await _fcm.getToken();
     if (token != null) {
-      await DatabaseService().updateFCMToken(uid, token);
+      await DatabaseService().updateFCMToken(token);
     }
 
     _fcm.onTokenRefresh.listen((newToken) {
-      DatabaseService().updateFCMToken(uid, newToken);
+      DatabaseService().updateFCMToken(newToken);
     });
+
   }
 
   Future<String?> getToken() async => await _fcm.getToken();

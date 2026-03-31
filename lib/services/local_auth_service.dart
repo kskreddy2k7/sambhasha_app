@@ -19,11 +19,10 @@ class LocalAuthService {
 
       return await _auth.authenticate(
         localizedReason: 'Please authenticate to unlock Sambhasha',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: false, // Allows PIN/Pattern fallback
-        ),
       );
+
+
+
     } on PlatformException catch (e) {
       print("Lock Error: $e");
       return false;

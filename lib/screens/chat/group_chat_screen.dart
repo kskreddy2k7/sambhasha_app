@@ -151,6 +151,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _sendGroupMessage(),
+                    child: const CircleAvatar(
+                      backgroundColor: Colors.blueAccent,
+                      child: Icon(Icons.send, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

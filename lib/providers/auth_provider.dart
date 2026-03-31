@@ -27,6 +27,37 @@ class AuthProvider extends ChangeNotifier {
     return error;
   }
 
+  // Phone Auth
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(String verificationId) onCodeSent,
+    required Function(String error) onError,
+  }) async {
+    setLoading(true);
+    await _authService.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      onCodeSent: (id) {
+        setLoading(false);
+        onCodeSent(id);
+      },
+      onError: (err) {
+        setLoading(false);
+        onError(err);
+      },
+    );
+  }
+
+  Future<String?> signInWithPhone(String verificationId, String smsCode) async {
+    setLoading(true);
+    String? error = await _authService.signInWithPhone(verificationId, smsCode);
+    if (error == null) {
+      await fetchUserData();
+    }
+    setLoading(false);
+    return error;
+  }
+
+
   // Save user data (for manual profile updates)
   Future<void> saveUserDataToFirestore({
     required String name,

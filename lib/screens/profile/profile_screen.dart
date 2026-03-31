@@ -1,4 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sambhasha_app/models/user_model.dart';
+import 'package:sambhasha_app/services/auth_service.dart';
+import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/services/local_auth_service.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+
+class ProfileScreen extends StatefulWidget {
+  final String uid;
+
+  const ProfileScreen({super.key, required this.uid});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
@@ -15,13 +31,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _loadSettings() async {
     final lockService = LocalAuthService();
     final enabled = await lockService.isLockEnabled();
-    setState(() => _isAppLockEnabled = enabled);
+    if (mounted) setState(() => _isAppLockEnabled = enabled);
+  }
+
+  void _saveProfile(DatabaseService db) async {
+    setState(() => _isSaving = true);
+    await db.updateProfile(name: _nameController.text.trim());
+    if (mounted) setState(() {
+      _isSaving = false;
+      _isEditing = false;
+    });
+  }
+
+  void _pickAndUploadImage(DatabaseService db) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final bytes = await pickedFile.readAsBytes();
+      final url = await db.uploadImage(bytes, pickedFile.name);
+      await db.updateProfile(profilePic: url);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final db = Provider.of<DatabaseService>(context);
-    final auth = Provider.of<AuthService>(context);
+    final db = Provider.of<DatabaseService>(context, listen: false);
+    final auth = Provider.of<AuthService>(context, listen: false);
     final currentUid = auth.currentUser?.uid;
     final bool isMe = currentUid == widget.uid;
 
@@ -184,7 +226,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildEditForm(DatabaseService db) {
     return Column(
       children: [
-        TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
+        TextField(
+          controller: _nameController, 
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(labelText: 'Name', labelStyle: TextStyle(color: Colors.grey)),
+        ),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

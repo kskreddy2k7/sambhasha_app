@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -36,11 +39,20 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
   void _setupDeliveredPulse() {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     final db = DatabaseService();
-    _deliveredSub = chatProvider.getRecentChats().listen((chats) {
+    _deliveredSub = chatProvider.getRecentChats().listen((chats) async {
        for (var doc in chats) {
-          db.markAsDelivered(doc.id);
+          final data = doc.data() as Map<String, dynamic>;
+          final lastMsg = data['lastMessage'];
+          if (lastMsg != null) {
+            final msgId = lastMsg['messageId'];
+            final senderId = lastMsg['senderId'];
+            if (senderId != db.currentUid) {
+              await db.markAsDelivered(doc.id, msgId);
+            }
+          }
        }
     });
+
   }
 
   @override

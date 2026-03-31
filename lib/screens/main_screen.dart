@@ -10,6 +10,9 @@ import 'package:sambhasha_app/screens/profile/profile_screen.dart';
 import 'package:sambhasha_app/screens/search/search_screen.dart';
 import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
+import 'package:sambhasha_app/screens/social/discover_screen.dart';
+import 'package:sambhasha_app/screens/ai/ai_assistant_screen.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

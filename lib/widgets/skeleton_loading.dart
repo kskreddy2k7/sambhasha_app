@@ -10,14 +10,24 @@ class Skeleton extends StatelessWidget {
     return Container(
       height: height,
       width: width,
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
 }
+
+class SkeletonLoader extends StatelessWidget {
+  final double? height, width;
+  const SkeletonLoader({super.key, this.height, this.width});
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton(height: height, width: width);
+  }
+}
+
 
 class ChatSkeleton extends StatelessWidget {
   const ChatSkeleton({super.key});
