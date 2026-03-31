@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class AIService {
-  static const String _apiKey = String.fromEnvironment(
-    'GEMINI_API_KEY',
-    defaultValue: '',
-  );
+  static String get _apiKey => dotenv.env['GEMINI_API_KEY'] ?? "";
+
   
   late final GenerativeModel _model;
   late final ChatSession _chat;

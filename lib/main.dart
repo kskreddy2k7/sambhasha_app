@@ -14,10 +14,14 @@ import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/screens/auth/config_error_screen.dart';
 import 'package:sambhasha_app/services/ai_service.dart';
 import 'package:sambhasha_app/services/local_auth_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
 
   bool isFirebaseInitialized = false;
   try {
