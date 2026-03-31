@@ -322,7 +322,7 @@ class ChatListItem extends StatelessWidget {
                   DateFormat('hh:mm a').format(lastMsg.timestamp),
                   style: TextStyle(
                     fontSize: 12, 
-                    color: lastMsg != null && !lastMsg.read && lastMsg.senderId != currentUid 
+                    color: !lastMsg.read && lastMsg.senderId != currentUid 
                       ? Colors.blueAccent 
                       : Colors.grey
                   ),

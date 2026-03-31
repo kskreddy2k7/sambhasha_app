@@ -134,7 +134,7 @@ class _UserListItem extends StatelessWidget {
         child: user.profilePic.isEmpty ? const Icon(Icons.person) : null,
       ),
       title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text("@${user.phone.substring(user.phone.length - 4)}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      subtitle: Text("@${user.phone.length >= 4 ? user.phone.substring(user.phone.length - 4) : user.phone}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
       trailing: StreamBuilder<bool>(
         stream: db.isFollowing(user.uid),
         builder: (context, snap) {

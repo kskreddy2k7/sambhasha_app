@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sambhasha_app/models/message_model.dart';
 import 'package:sambhasha_app/models/user_model.dart';
 import 'package:sambhasha_app/providers/chat_provider.dart';
+import 'package:sambhasha_app/screens/call/call_screen.dart';
 import 'package:sambhasha_app/services/ai_service.dart';
 import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
@@ -37,6 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _chatId = _db.getChatId(widget.otherUser.uid);
     Future.delayed(Duration.zero, () {
+      if (!mounted) return;
       Provider.of<ChatProvider>(context, listen: false).markAsRead(_chatId);
     });
   }
@@ -90,7 +92,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _fetchSmartReplies(String lastMsg) async {
-    // ...
+    if (_isAILoading) return;
+    setState(() => _isAILoading = true);
+    final ai = Provider.of<AIService>(context, listen: false);
+    try {
+      final replies = await ai.generateSmartReplies(lastMsg);
+      if (mounted) setState(() => _smartReplies = replies);
+    } catch (e) {
+      debugPrint('Smart replies error: $e');
+    } finally {
+      if (mounted) setState(() => _isAILoading = false);
+    }
   }
 
   void _sendMessage({String? customText}) {
@@ -111,7 +123,30 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _startCall(BuildContext context, CallType type) async {
-    // Calling code...
+    final callService = Provider.of<CallService>(context, listen: false);
+    try {
+      final callId = await callService.initiateCall(
+        receiverId: widget.otherUser.uid,
+        type: type,
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CallScreen(
+            remoteUser: widget.otherUser,
+            callId: callId,
+            callType: type,
+            isCaller: true,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not start call: $e"), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   void _sendImage() async {
