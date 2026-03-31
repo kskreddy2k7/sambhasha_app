@@ -3,12 +3,18 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/material.dart';
 
 class AIService {
-  static const String _apiKey = "YOUR_GEMINI_API_KEY"; // User to provide or set via Env
+  static const String _apiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
   
   late final GenerativeModel _model;
   late final ChatSession _chat;
 
   AIService() {
+    if (_apiKey.isEmpty) {
+      debugPrint('Warning: GEMINI_API_KEY is not set. AI features will be unavailable.');
+    }
     _model = GenerativeModel(
       model: 'gemini-pro',
       apiKey: _apiKey,
