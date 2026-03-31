@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sambhasha_app/firebase_options.dart';
 import 'package:sambhasha_app/providers/auth_provider.dart';
 import 'package:sambhasha_app/providers/chat_provider.dart';
+import 'package:sambhasha_app/providers/navigation_provider.dart';
 import 'package:sambhasha_app/screens/auth/login_screen.dart';
 import 'package:sambhasha_app/screens/main_screen.dart';
 import 'package:sambhasha_app/screens/splash/splash_screen.dart';
@@ -13,6 +14,7 @@ import 'package:sambhasha_app/services/notification_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/screens/auth/config_error_screen.dart';
 import 'package:sambhasha_app/services/ai_service.dart';
+import 'package:sambhasha_app/services/story_service.dart';
 import 'package:sambhasha_app/services/local_auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -44,8 +46,10 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<AIService>(create: (_) => AIService()),
+        Provider<StoryService>(create: (_) => StoryService()),
         Provider<DatabaseService>(create: (_) => DatabaseService()),
         Provider<NotificationService>.value(value: notificationService),
         Provider<CallService>(
@@ -67,28 +71,61 @@ class SambhashaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sambhasha',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        primaryColor: Colors.blueAccent,
-        scaffoldBackgroundColor: Colors.black,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF2E6FF2),
+        scaffoldBackgroundColor: const Color(0xFF050505),
+        fontFamily: 'Inter', // Assuming standard fallback
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.black.withValues(alpha: 0.7),
           elevation: 0,
+          centerTitle: false,
+          titleTextStyle: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+            color: Colors.white,
+          ),
         ),
         colorScheme: const ColorScheme.dark(
-          primary: Colors.blueAccent,
-          secondary: Colors.blueAccent,
-          surface: Color(0xFF1A1A1A),
+          primary: Color(0xFF2E6FF2),
+          secondary: Color(0xFF2E6FF2),
+          surface: Color(0xFF121212),
+          error: Color(0xFFFF4B4B),
+          onPrimary: Colors.white,
+          onSurface: Colors.white,
+        ),
+        cardTheme: CardThemeData(
+          color: const Color(0xFF1A1A1A),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: const Color(0xFF2E6FF2),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.05),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 15),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+        dividerTheme: const DividerThemeData(
+          color: Color(0xFF222222),
+          thickness: 1,
+          space: 1,
+        ),
       ),
-      // If Firebase failed, show the error screen. Otherwise, proceed to AuthWrapper.
       home: isFirebaseInitialized ? const AuthWrapper() : const ConfigErrorScreen(),
     );
   }
@@ -157,11 +194,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
                 return const SplashScreen();
               }
               
-              final db = Provider.of<DatabaseService>(context, listen: false);
-              db.setUserOnlineStatus(true);
+              if (mounted) {
+                final db = Provider.of<DatabaseService>(context, listen: false);
+                db.setUserOnlineStatus(true);
 
-              final ns = Provider.of<NotificationService>(context, listen: false);
-              ns.updateToken(authService.currentUser!.uid);
+                final ns = Provider.of<NotificationService>(context, listen: false);
+                ns.updateToken(authService.currentUser!.uid);
+              }
 
               return const MainScreen();
             },
@@ -193,3 +232,4 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 }
+

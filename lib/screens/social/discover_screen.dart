@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sambhasha_app/models/user_model.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/screens/chat/chat_screen.dart';
+import 'package:sambhasha_app/widgets/shimmer_skeletons.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -28,7 +28,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: AppBar(
-              backgroundColor: Colors.white.withOpacity(0.04),
+              backgroundColor: Colors.white.withValues(alpha: 0.04),
               elevation: 0,
               title: const Text("Discover", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
               bottom: PreferredSize(
@@ -37,7 +37,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextField(
@@ -69,7 +69,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       future: _db.searchUsers(_query),
       builder: (context, snapshot) {
 
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData) return const DiscoverGridSkeleton();
         final users = snapshot.data!;
         if (users.isEmpty) return const Center(child: Text("No users found", style: TextStyle(color: Colors.grey)));
         
@@ -94,7 +94,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         FutureBuilder<List<UserModel>>(
           future: _db.getSuggestedUsers(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+            if (!snapshot.hasData) return const StoryBarSkeleton();
             final suggestions = snapshot.data!;
             if (suggestions.isEmpty) return const SizedBox();
             
@@ -128,6 +128,7 @@ class _UserListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final db = DatabaseService();
     return ListTile(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(otherUser: user))),
       leading: CircleAvatar(
         radius: 24,
         backgroundImage: user.profilePic.isNotEmpty ? NetworkImage(user.profilePic) : null,
@@ -135,20 +136,30 @@ class _UserListItem extends StatelessWidget {
       ),
       title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text("@${user.phone.length >= 4 ? user.phone.substring(user.phone.length - 4) : user.phone}", style: const TextStyle(color: Colors.grey, fontSize: 12)),
-      trailing: StreamBuilder<bool>(
-        stream: db.isFollowing(user.uid),
-        builder: (context, snap) {
-          final following = snap.data ?? false;
-          return ElevatedButton(
-            onPressed: () => following ? db.unfollowUser(user.uid) : db.followUser(user.uid),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: following ? Colors.white.withOpacity(0.1) : Colors.blueAccent,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: const Size(80, 32),
-            ),
-            child: Text(following ? "Following" : "Follow", style: TextStyle(color: following ? Colors.white : Colors.white, fontSize: 12)),
-          );
-        },
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StreamBuilder<bool>(
+            stream: db.isFollowing(user.uid),
+            builder: (context, snap) {
+              final following = snap.data ?? false;
+              return ElevatedButton(
+                onPressed: () => following ? db.unfollowUser(user.uid) : db.followUser(user.uid),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: following ? Colors.white.withValues(alpha: 0.1) : Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: const Size(80, 32),
+                ),
+                child: Text(following ? "Following" : "Follow", style: const TextStyle(color: Colors.white, fontSize: 12)),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: Colors.blueAccent),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(otherUser: user))),
+          ),
+        ],
       ),
     );
   }
@@ -166,9 +177,9 @@ class _SuggestedUserCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -184,16 +195,34 @@ class _SuggestedUserCard extends StatelessWidget {
             stream: db.isFollowing(user.uid),
             builder: (context, snap) {
               final following = snap.data ?? false;
-              return SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => following ? db.unfollowUser(user.uid) : db.followUser(user.uid),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: following ? Colors.white.withOpacity(0.08) : Colors.blueAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              return Row(
+                children: [
+                   Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => following ? db.unfollowUser(user.uid) : db.followUser(user.uid),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: following ? Colors.white.withValues(alpha: 0.08) : Colors.blueAccent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text(following ? "Following" : "Follow", style: const TextStyle(fontSize: 10)),
+                    ),
                   ),
-                  child: Text(following ? "Following" : "Follow", style: const TextStyle(fontSize: 11)),
-                ),
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                       color: Colors.blueAccent.withValues(alpha: 0.1),
+                       borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                       padding: EdgeInsets.zero,
+                       icon: const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.blueAccent),
+                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(otherUser: user))),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -202,3 +231,4 @@ class _SuggestedUserCard extends StatelessWidget {
     );
   }
 }
+

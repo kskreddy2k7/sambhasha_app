@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sambhasha_app/models/message_model.dart';
+import 'message_model.dart';
 
 class GroupModel {
   final String groupId;
@@ -49,3 +49,4 @@ class GroupModel {
     };
   }
 }
+

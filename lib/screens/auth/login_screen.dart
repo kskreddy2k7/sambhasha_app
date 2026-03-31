@@ -103,10 +103,10 @@ class LoginScreen extends StatelessWidget {
                   icon: const Icon(Icons.phone_android_rounded, color: Colors.blueAccent),
                   label: const Text("Continue with Phone", style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.white)),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.white.withOpacity(0.15), width: 1.5),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: Colors.white.withOpacity(0.02),
+                    backgroundColor: Colors.white.withValues(alpha: 0.02),
                   ),
                 ),
                 
@@ -126,3 +126,4 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
+

@@ -45,9 +45,9 @@ class _SearchScreenState extends State<SearchScreen> {
         elevation: 0,
         title: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: TextField(
             controller: _searchController,
@@ -79,15 +79,15 @@ class _SearchScreenState extends State<SearchScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.05),
+                      color: Colors.blueAccent.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.person_search_rounded, size: 100, color: Colors.blueAccent.withOpacity(0.2)),
+                    child: Icon(Icons.person_search_rounded, size: 100, color: Colors.blueAccent.withValues(alpha: 0.2)),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Discover Users',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.9)),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.9)),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -128,9 +128,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     final user = users[index];
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.03),
+                        color: Colors.white.withValues(alpha: 0.03),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.05)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(12),
@@ -168,3 +168,4 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 }
+

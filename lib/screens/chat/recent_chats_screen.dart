@@ -12,6 +12,8 @@ import 'package:sambhasha_app/providers/auth_provider.dart' as app_auth;
 import 'package:sambhasha_app/providers/chat_provider.dart';
 import 'package:sambhasha_app/screens/chat/chat_screen.dart';
 import 'package:sambhasha_app/widgets/story_bar.dart';
+import 'package:sambhasha_app/providers/navigation_provider.dart';
+import 'package:sambhasha_app/widgets/shimmer_skeletons.dart';
 import 'package:sambhasha_app/models/group_model.dart';
 import 'package:sambhasha_app/screens/chat/create_group_screen.dart';
 import 'package:sambhasha_app/screens/chat/group_chat_screen.dart';
@@ -76,7 +78,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: AppBar(
-              backgroundColor: Colors.white.withOpacity(0.04),
+              backgroundColor: Colors.white.withValues(alpha: 0.04),
               title: const Text(
                 "Sambhasha", 
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, letterSpacing: 1.2)
@@ -116,7 +118,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
         backgroundColor: Colors.blueAccent,
         onPressed: () {
           if (_tabController.index == 0) {
-            _tabController.animateTo(1); 
+            Provider.of<NavigationProvider>(context, listen: false).setIndex(1); 
           } else {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
           }
@@ -136,7 +138,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
                 stream: chatProvider.getRecentChats(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const ChatListSkeleton();
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return _buildEmptyState(context, "No conversations yet", Icons.chat_bubble_outline);
@@ -165,7 +167,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
               stream: chatProvider.getUserGroups(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ChatListSkeleton();
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return _buildEmptyState(context, "No groups yet", Icons.groups_outlined);
@@ -223,7 +225,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
           Text(title, style: const TextStyle(color: Colors.grey)),
           if (title.contains("conversations"))
             TextButton(
-              onPressed: () => DefaultTabController.of(context).animateTo(1),
+              onPressed: () => Provider.of<NavigationProvider>(context, listen: false).setIndex(1),
               child: const Text("Find someone to chat with"),
             ),
         ],
@@ -341,3 +343,4 @@ class ChatListItem extends StatelessWidget {
     );
   }
 }
+

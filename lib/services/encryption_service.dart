@@ -99,3 +99,4 @@ class EncryptionService {
     return secureRandom;
   }
 }
+

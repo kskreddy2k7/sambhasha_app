@@ -42,7 +42,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       width: 250,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -101,3 +101,4 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     );
   }
 }
+

@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.sai.sambhasa_app"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.sai.sambhasa_app"
-        minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        minSdk = 24
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

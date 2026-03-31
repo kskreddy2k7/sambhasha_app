@@ -74,8 +74,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       textStyle: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
-        color: Colors.white.withOpacity(0.05),
+        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5)),
+        color: Colors.white.withValues(alpha: 0.05),
       ),
     );
 
@@ -121,12 +121,12 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: "+1 123 456 7890",
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.05),
+                      fillColor: Colors.white.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       prefixIcon: const Icon(Icons.phone, color: Colors.blueAccent),
                     ),
@@ -186,3 +186,4 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     );
   }
 }
+

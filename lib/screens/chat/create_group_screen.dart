@@ -130,3 +130,4 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     );
   }
 }
+

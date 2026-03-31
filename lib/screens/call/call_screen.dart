@@ -38,11 +38,12 @@ class _CallScreenState extends State<CallScreen> {
 
   bool _isMuted = false;
   bool _isCameraOff = false;
-  bool _isConnected = false;
   bool _speakerOn = true;
 
-  int _seconds = 0;
-  Timer? _timer;
+  int _currentDuration = 0;
+  RTCPeerConnectionState _currentState = RTCPeerConnectionState.RTCPeerConnectionStateNew;
+  StreamSubscription<int>? _durationSub;
+  StreamSubscription<RTCPeerConnectionState>? _statusSub;
 
   @override
   void initState() {
@@ -50,7 +51,7 @@ class _CallScreenState extends State<CallScreen> {
     _callService = Provider.of<CallService>(context, listen: false);
     _initRenderers();
     _listenStreams();
-    _startTimer();
+    _listenCallMetrics();
     // Default to speakerphone on during calls
     Helper.setSpeakerphoneOn(true);
   }
@@ -71,13 +72,11 @@ class _CallScreenState extends State<CallScreen> {
 
     _remoteSub = _callService.remoteStream.listen((stream) {
       if (mounted) {
-        final wasConnected = _isConnected;
         setState(() {
           _remoteRenderer.srcObject = stream;
-          _isConnected = stream != null;
         });
         // Auto-pop when remote hangs up (stream clears after being connected)
-        if (wasConnected && stream == null && mounted) {
+        if (_currentState == RTCPeerConnectionState.RTCPeerConnectionStateClosed && mounted) {
           Helper.setSpeakerphoneOn(false);
           Navigator.of(context).pop();
         }
@@ -85,16 +84,37 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _seconds++);
+  void _listenCallMetrics() {
+    _durationSub = _callService.durationStream.listen((secs) {
+      if (mounted) setState(() => _currentDuration = secs);
+    });
+
+    _statusSub = _callService.connectionStateStream.listen((state) {
+      if (mounted) {
+        setState(() => _currentState = state);
+        if (state == RTCPeerConnectionState.RTCPeerConnectionStateClosed || 
+            state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
+           _endCall();
+        }
+      }
     });
   }
 
   String get _formattedDuration {
-    final m = (_seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (_seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+    final h = (_currentDuration ~/ 3600).toString().padLeft(2, '0');
+    final m = ((_currentDuration % 3600) ~/ 60).toString().padLeft(2, '0');
+    final s = (_currentDuration % 60).toString().padLeft(2, '0');
+    return _currentDuration >= 3600 ? '$h:$m:$s' : '$m:$s';
+  }
+
+  String get _statusText {
+    switch (_currentState) {
+      case RTCPeerConnectionState.RTCPeerConnectionStateConnected: return _formattedDuration;
+      case RTCPeerConnectionState.RTCPeerConnectionStateConnecting: return "Connecting...";
+      case RTCPeerConnectionState.RTCPeerConnectionStateFailed: return "Failed";
+      case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected: return "Disconnected";
+      default: return "Calling...";
+    }
   }
 
   Future<void> _endCall() async {
@@ -119,7 +139,8 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _durationSub?.cancel();
+    _statusSub?.cancel();
     _localSub?.cancel();
     _remoteSub?.cancel();
     _localRenderer.dispose();
@@ -148,7 +169,7 @@ class _CallScreenState extends State<CallScreen> {
       children: [
         // Remote video (full screen)
         Positioned.fill(
-          child: _isConnected
+          child: _currentState == RTCPeerConnectionState.RTCPeerConnectionStateConnected
               ? RTCVideoView(_remoteRenderer,
                   objectFit:
                       RTCVideoViewObjectFit.RTCVideoViewObjectFitCover)
@@ -193,7 +214,7 @@ class _CallScreenState extends State<CallScreen> {
         const Spacer(flex: 2),
         CircleAvatar(
           radius: 72,
-          backgroundColor: Colors.blueAccent.withOpacity(0.15),
+          backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
         backgroundImage: widget.remoteUser.profilePic.isNotEmpty
             ? NetworkImage(widget.remoteUser.profilePic)
             : null,
@@ -210,7 +231,7 @@ class _CallScreenState extends State<CallScreen> {
               color: Colors.white)),
         const SizedBox(height: 8),
         Text(
-          _isConnected ? _formattedDuration : 'Connecting…',
+          _statusText,
           style: const TextStyle(fontSize: 16, color: Colors.white70),
         ),
         const Spacer(flex: 3),
@@ -264,8 +285,8 @@ class _CallScreenState extends State<CallScreen> {
                 fontWeight: FontWeight.bold,
                 color: textColor)),
         Text(
-          _isConnected ? _formattedDuration : 'Connecting…',
-          style: TextStyle(fontSize: 13, color: textColor.withOpacity(0.7)),
+          _statusText,
+          style: TextStyle(fontSize: 13, color: textColor.withValues(alpha: 0.7)),
         ),
       ],
     );
@@ -335,7 +356,7 @@ class _CallScreenState extends State<CallScreen> {
           CircleAvatar(
             radius: 28,
             backgroundColor:
-                active ? Colors.white24 : Colors.white.withOpacity(0.1),
+                active ? Colors.white24 : Colors.white.withValues(alpha: 0.1),
             child: Icon(icon, color: Colors.white, size: 26),
           ),
           const SizedBox(height: 6),
@@ -364,3 +385,4 @@ class _CallScreenState extends State<CallScreen> {
     );
   }
 }
+

@@ -41,7 +41,7 @@ class IncomingCallScreen extends StatelessWidget {
                 // Caller avatar
                 CircleAvatar(
                   radius: 72,
-                  backgroundColor: Colors.blueAccent.withOpacity(0.15),
+                  backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
                   backgroundImage: (callerPhoto != null && callerPhoto.isNotEmpty)
                       ? NetworkImage(callerPhoto)
                       : null,
@@ -180,3 +180,4 @@ class IncomingCallScreen extends StatelessWidget {
     );
   }
 }
+

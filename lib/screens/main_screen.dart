@@ -7,7 +7,7 @@ import 'package:sambhasha_app/models/call_model.dart';
 import 'package:sambhasha_app/screens/call/incoming_call_screen.dart';
 import 'package:sambhasha_app/screens/chat/recent_chats_screen.dart';
 import 'package:sambhasha_app/screens/profile/profile_screen.dart';
-import 'package:sambhasha_app/screens/search/search_screen.dart';
+import 'package:sambhasha_app/providers/navigation_provider.dart';
 import 'package:sambhasha_app/services/call_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/screens/social/discover_screen.dart';
@@ -22,7 +22,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
-  int _currentIndex = 0;
+  // Navigation is now managed by NavigationProvider
 
   // Track the callId currently shown to avoid duplicate navigation.
   String? _activeIncomingCallId;
@@ -75,6 +75,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
+    final navProvider = Provider.of<NavigationProvider>(context);
+    final currentIndex = navProvider.currentIndex;
+
     final screens = [
       const RecentChatsScreen(),
       const DiscoverScreen(),
@@ -91,32 +94,32 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           extendBody: true,
           body: Row(
             children: [
-              if (isWide) _buildNavigationRail(),
+              if (isWide) _buildNavigationRail(navProvider, currentIndex),
               Expanded(
                 child: IndexedStack(
-                  index: _currentIndex,
+                  index: currentIndex,
                   children: screens,
                 ),
               ),
             ],
           ),
-          bottomNavigationBar: isWide ? null : _buildBottomBar(),
+          bottomNavigationBar: isWide ? null : _buildBottomBar(navProvider, currentIndex),
         );
       },
     );
   }
 
-  Widget _buildNavigationRail() {
+  Widget _buildNavigationRail(NavigationProvider navProvider, int currentIndex) {
     return Container(
       width: 80,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
+        color: Colors.white.withValues(alpha: 0.04),
+        border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
       ),
       child: NavigationRail(
         backgroundColor: Colors.transparent,
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) => navProvider.setIndex(index),
         labelType: NavigationRailLabelType.none,
         selectedIconTheme: const IconThemeData(color: Colors.blueAccent),
         unselectedIconTheme: const IconThemeData(color: Colors.grey),
@@ -153,7 +156,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(NavigationProvider navProvider, int currentIndex) {
     return Container(
       height: 70,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
@@ -163,12 +166,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
             ),
             child: BottomNavigationBar(
-              currentIndex: _currentIndex,
+              currentIndex: currentIndex,
               backgroundColor: Colors.transparent,
               elevation: 0,
               selectedItemColor: Colors.blueAccent,
@@ -176,7 +179,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               type: BottomNavigationBarType.fixed,
               showSelectedLabels: false,
               showUnselectedLabels: false,
-              onTap: (index) => setState(() => _currentIndex = index),
+              onTap: (index) => navProvider.setIndex(index),
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.chat_bubble_outline),
@@ -206,3 +209,4 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     );
   }
 }
+

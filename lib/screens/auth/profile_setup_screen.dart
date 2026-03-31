@@ -132,7 +132,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           children: [
                             CircleAvatar(
                               radius: 70,
-                              backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                              backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
                               backgroundImage: _imageBytes != null 
                                   ? MemoryImage(_imageBytes!) 
                                   : (_initialPhotoUrl != null ? NetworkImage(_initialPhotoUrl!) : null) as ImageProvider?,
@@ -165,11 +165,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           hintStyle: const TextStyle(color: Colors.white24),
                           prefixIcon: const Icon(Icons.person_outline, color: Colors.blueAccent),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.05),
+                          fillColor: Colors.white.withValues(alpha: 0.05),
                           contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
@@ -188,7 +188,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             elevation: 8,
-                            shadowColor: Colors.blueAccent.withOpacity(0.4),
+                            shadowColor: Colors.blueAccent.withValues(alpha: 0.4),
                           ),
                           child: authProvider.isLoading
                             ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -210,3 +210,4 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 }
+

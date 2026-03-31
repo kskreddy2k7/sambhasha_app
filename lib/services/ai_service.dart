@@ -40,14 +40,21 @@ class AIService {
 
   // 2. Chat with Assistant
   Future<String> chatWithAssistant(String userMessage) async {
+    if (_apiKey.isEmpty) {
+      return "Assistant is currently unavailable (API Key not configured). Please set GEMINI_API_KEY in your .env file.";
+    }
     try {
       final response = await _chat.sendMessage(Content.text(userMessage));
       return response.text ?? "I'm sorry, I couldn't process that.";
     } catch (e) {
       debugPrint("AI Chat Error: $e");
-      return "Something went wrong. Please check your connection.";
+      if (e.toString().contains("Invalid API key")) {
+        return "The AI Assistant's API key is invalid or restricted. Please verify your Gemini API key.";
+      }
+      return "Something went wrong. Please check your internet connection or try again later.";
     }
   }
+
 
   // 3. Translate Message
   Future<String> translateText(String text, String targetLanguage) async {
@@ -61,4 +68,20 @@ class AIService {
       return text;
     }
   }
+
+  // 4. Summarize Chat
+  Future<String> summarizeChat(List<String> messages) async {
+    if (messages.isEmpty) return "No messages to summarize.";
+    final chatText = messages.join('\n');
+    final prompt = "You are a professional assistant. Summarize the following chat conversation into a concise paragraph (max 3 sentences):\n\n$chatText";
+    
+    try {
+      final response = await _model.generateContent([Content.text(prompt)]);
+      return response.text ?? "I couldn't summarize that.";
+    } catch (e) {
+      debugPrint("AI Summarization Error: $e");
+      return "Assistant is currently unable to summarize.";
+    }
+  }
 }
+

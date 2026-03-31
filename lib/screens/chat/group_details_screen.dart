@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sambhasha_app/models/group_model.dart';
 import 'package:sambhasha_app/models/user_model.dart';
-import 'package:sambhasha_app/providers/chat_provider.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/services/group_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -135,3 +133,4 @@ class GroupDetailsScreen extends StatelessWidget {
     );
   }
 }
+

@@ -22,9 +22,16 @@ class CallService {
 
   final _localStreamCtrl = StreamController<MediaStream?>.broadcast();
   final _remoteStreamCtrl = StreamController<MediaStream?>.broadcast();
+  final _durationCtrl = StreamController<int>.broadcast();
+  final _connectionStateCtrl = StreamController<RTCPeerConnectionState>.broadcast();
 
   Stream<MediaStream?> get localStream => _localStreamCtrl.stream;
   Stream<MediaStream?> get remoteStream => _remoteStreamCtrl.stream;
+  Stream<int> get durationStream => _durationCtrl.stream;
+  Stream<RTCPeerConnectionState> get connectionStateStream => _connectionStateCtrl.stream;
+
+  Timer? _callTimer;
+  int _seconds = 0;
 
   bool _isMuted = false;
   bool _isCameraOff = false;
@@ -287,6 +294,10 @@ class CallService {
 
     _peerConnection!.onConnectionState =
         (RTCPeerConnectionState state) async {
+      _connectionStateCtrl.add(state);
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+        _startTimer();
+      }
       if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
           state ==
               RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
@@ -295,7 +306,24 @@ class CallService {
     };
   }
 
+  void _startTimer() {
+    _callTimer?.cancel();
+    _seconds = 0;
+    _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _seconds++;
+      _durationCtrl.add(_seconds);
+    });
+  }
+
+  void _stopTimer() {
+    _callTimer?.cancel();
+    _callTimer = null;
+    _seconds = 0;
+    _durationCtrl.add(0);
+  }
+
   Future<void> _cleanup() async {
+    _stopTimer();
     _callDocSub?.cancel();
     _remoteCandidatesSub?.cancel();
     _callDocSub = null;
@@ -315,11 +343,15 @@ class CallService {
   }
 
   void dispose() {
+    _stopTimer();
     _callDocSub?.cancel();
     _remoteCandidatesSub?.cancel();
     _localStream?.dispose();
     _peerConnection?.close();
     _localStreamCtrl.close();
     _remoteStreamCtrl.close();
+    _durationCtrl.close();
+    _connectionStateCtrl.close();
   }
 }
+

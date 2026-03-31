@@ -47,7 +47,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: AppBar(
-              backgroundColor: Colors.white.withOpacity(0.04),
+              backgroundColor: Colors.white.withValues(alpha: 0.04),
               elevation: 0,
               title: GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GroupDetailsScreen(group: widget.group))),
@@ -133,9 +133,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                    Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: TextField(
                         controller: _msgController,
@@ -167,3 +167,4 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 }
+

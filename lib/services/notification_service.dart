@@ -2,7 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sambhasha_app/services/database_service.dart';
-import 'package:sambhasha_app/models/call_model.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -62,10 +61,20 @@ class NotificationService {
       notification.body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'high_importance_channel',
-          'High Importance Notifications',
+          'sambhasha_high_priority',
+          'Sambhasha Notifications',
+          channelDescription: 'High priority notifications for messages and calls.',
           importance: Importance.max,
           priority: Priority.high,
+          showWhen: true,
+          enableVibration: true,
+          playSound: true,
+          styleInformation: BigTextStyleInformation(''),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
         ),
       ),
     );
@@ -80,8 +89,8 @@ class NotificationService {
     _fcm.onTokenRefresh.listen((newToken) {
       DatabaseService().updateFCMToken(newToken);
     });
-
   }
 
   Future<String?> getToken() async => await _fcm.getToken();
 }
+

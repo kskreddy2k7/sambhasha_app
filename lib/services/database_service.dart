@@ -1,11 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 import 'package:sambhasha_app/models/message_model.dart';
 import 'package:sambhasha_app/models/user_model.dart';
 import 'package:sambhasha_app/services/encryption_service.dart';
-import 'package:uuid/uuid.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -13,7 +14,7 @@ class DatabaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final EncryptionService _encryption = EncryptionService();
 
-  String get currentUid => _auth.currentUser!.uid;
+  String get currentUid => _auth.currentUser?.uid ?? '';
 
   // --- USER CORE ---
   Stream<UserModel?> getUserData(String uid) {
@@ -74,10 +75,16 @@ class DatabaseService {
   }) async {
     final String chatId = getChatId(receiverId);
     final String messageId = _firestore.collection('chats').doc(chatId).collection('messages').doc().id;
-    String sessionKey = await _getOrCreateSessionKey(chatId, receiverId);
-    String encryptedText = (type == MessageType.text && sessionKey.isNotEmpty) 
-        ? _encryption.encryptAES(text, sessionKey) 
-        : text;
+    
+    String encryptedText = text;
+    try {
+      String sessionKey = await _getOrCreateSessionKey(chatId, receiverId);
+      if (type == MessageType.text && sessionKey.isNotEmpty) {
+        encryptedText = _encryption.encryptAES(text, sessionKey);
+      }
+    } catch (e) {
+      debugPrint("Encryption error, sending as plaintext: $e");
+    }
 
     final message = MessageModel(
       messageId: messageId,
@@ -98,21 +105,27 @@ class DatabaseService {
     }, SetOptions(merge: true));
   }
 
-  Stream<List<MessageModel>> getMessages(String chatId) {
+  Stream<List<MessageModel>> getMessages(String chatId, {int limit = 50}) {
     return _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
+        .limit(limit)
         .snapshots()
         .asyncMap((snapshot) async {
           final now = DateTime.now();
           String sessionKey = "";
-          var chatDoc = await _firestore.collection('chats').doc(chatId).get();
-          if (chatDoc.exists && chatDoc.data()?['keys'] != null) {
-            String? myEncryptedKey = chatDoc.data()!['keys'][currentUid];
-            if (myEncryptedKey != null) sessionKey = await _encryption.decryptRSA(myEncryptedKey);
+          try {
+            var chatDoc = await _firestore.collection('chats').doc(chatId).get();
+            if (chatDoc.exists && chatDoc.data()?['keys'] != null) {
+              String? myEncryptedKey = chatDoc.data()!['keys'][currentUid];
+              if (myEncryptedKey != null) sessionKey = await _encryption.decryptRSA(myEncryptedKey);
+            }
+          } catch (e) {
+            debugPrint("Key fetch error in getMessages: $e");
           }
+
           List<MessageModel> messages = [];
           for (var doc in snapshot.docs) {
             var msg = MessageModel.fromMap(doc.data());
@@ -121,9 +134,15 @@ class DatabaseService {
               if (now.isAfter(expiryTime)) continue;
             }
             if (!msg.isDeleted) {
-              String decryptedText = (msg.type == MessageType.text && sessionKey.isNotEmpty)
-                  ? _encryption.decryptAES(msg.text, sessionKey)
-                  : msg.text;
+              String decryptedText = msg.text;
+              try {
+                if (msg.type == MessageType.text && sessionKey.isNotEmpty) {
+                  decryptedText = _encryption.decryptAES(msg.text, sessionKey);
+                }
+              } catch (e) {
+                debugPrint("Decryption error for msg ${msg.messageId}: $e");
+              }
+
               messages.add(MessageModel(
                 messageId: msg.messageId, senderId: msg.senderId,
                 text: decryptedText, type: msg.type,
@@ -211,10 +230,34 @@ class DatabaseService {
         .update({'isDeleted': true, 'text': 'This message was deleted'});
   }
 
-  Future<void> updateFCMToken(String token) async {
-    await _firestore.collection('users').doc(currentUid).update({'fcmToken': token});
+  Future<void> editMessage(String chatId, String messageId, String newText) async {
+    String encryptedText = newText;
+    try {
+      // Find the other participant to fetch key
+      var chatDoc = await _firestore.collection('chats').doc(chatId).get();
+      List<dynamic> participants = chatDoc.data()?['participants'] ?? [];
+      String otherUid = participants.firstWhere((id) => id != currentUid, orElse: () => "");
+      
+      final sessionKey = await _getOrCreateSessionKey(chatId, otherUid); 
+      if (sessionKey.isNotEmpty) {
+        encryptedText = _encryption.encryptAES(newText, sessionKey);
+      }
+    } catch (e) {
+      debugPrint("Edit encryption error: $e");
+    }
+    
+    await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'text': encryptedText, 'isEdited': true});
   }
 
+  Future<void> updateFCMToken(String token) async {
+    if (currentUid.isEmpty) return;
+    await _firestore.collection('users').doc(currentUid).update({'fcmToken': token});
+  }
 
   Stream<DocumentSnapshot> getChatStream(String chatId) => _firestore.collection('chats').doc(chatId).snapshots();
   
@@ -234,11 +277,18 @@ class DatabaseService {
     return await (await uploadTask).ref.getDownloadURL();
   }
 
+  Future<String> uploadAudio(String filePath, String fileName) async {
+    Reference ref = _storage.ref().child('chat_voice/${const Uuid().v4()}_$fileName');
+    UploadTask uploadTask = ref.putFile(File(filePath), SettableMetadata(contentType: 'audio/m4a'));
+    return await (await uploadTask).ref.getDownloadURL();
+  }
 
   Future<void> markAsRead(String chatId) async {
     var snapshot = await _firestore.collection('chats').doc(chatId).collection('messages').where('senderId', isNotEqualTo: currentUid).where('read', isEqualTo: false).get();
     WriteBatch batch = _firestore.batch();
-    for (var doc in snapshot.docs) batch.update(doc.reference, {'read': true, 'status': MessageStatus.seen.name});
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {'read': true, 'status': MessageStatus.seen.name});
+    }
     await batch.commit();
   }
 }

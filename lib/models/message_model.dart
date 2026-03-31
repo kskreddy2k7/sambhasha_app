@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum MessageType { text, image, file, voice, video }
 
@@ -13,8 +13,9 @@ class MessageModel {
   final bool read;
   final MessageStatus status;
   final bool isDeleted;
+  final bool isEdited;
   final String? replyToId;
-  final int? expiryDuration; // null = persistent, else seconds
+  final int? expiryDuration;
 
   MessageModel({
     required this.messageId,
@@ -25,6 +26,7 @@ class MessageModel {
     required this.read,
     this.status = MessageStatus.sent,
     this.isDeleted = false,
+    this.isEdited = false,
     this.replyToId,
     this.expiryDuration,
   });
@@ -34,7 +36,10 @@ class MessageModel {
       messageId: map['messageId'] ?? '',
       senderId: map['senderId'] ?? '',
       text: map['text'] ?? '',
-      type: MessageType.values.byName(map['type'] ?? 'text'),
+      type: MessageType.values.firstWhere(
+        (e) => e.name == (map['type'] ?? 'text'),
+        orElse: () => MessageType.text,
+      ),
       timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       read: map['read'] ?? false,
       status: MessageStatus.values.firstWhere(
@@ -42,6 +47,7 @@ class MessageModel {
         orElse: () => MessageStatus.sent,
       ),
       isDeleted: map['isDeleted'] ?? false,
+      isEdited: map['isEdited'] ?? false,
       replyToId: map['replyToId'],
       expiryDuration: map['expiryDuration'],
     );
@@ -57,6 +63,7 @@ class MessageModel {
       'read': read,
       'status': status.name,
       'isDeleted': isDeleted,
+      'isEdited': isEdited,
       'replyToId': replyToId,
       'expiryDuration': expiryDuration,
     };

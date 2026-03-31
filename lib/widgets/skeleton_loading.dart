@@ -11,7 +11,7 @@ class Skeleton extends StatelessWidget {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
       ),
     );
@@ -58,3 +58,4 @@ class ChatSkeleton extends StatelessWidget {
     );
   }
 }
+

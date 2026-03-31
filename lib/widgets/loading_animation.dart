@@ -7,7 +7,7 @@ class LoadingAnimation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.5),
+      color: Colors.black.withValues(alpha: 0.5),
       child: const Center(
         child: SpinKitFadingCircle(
           color: Colors.blueAccent,
@@ -17,3 +17,4 @@ class LoadingAnimation extends StatelessWidget {
     );
   }
 }
+

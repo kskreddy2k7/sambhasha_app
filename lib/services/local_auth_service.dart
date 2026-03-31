@@ -40,3 +40,4 @@ class LocalAuthService {
     await prefs.setBool('app_lock_enabled', enabled);
   }
 }
+

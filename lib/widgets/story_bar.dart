@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sambhasha_app/models/story_model.dart';
 import 'package:sambhasha_app/services/story_service.dart';
-import 'package:sambhasha_app/widgets/skeleton_loading.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sambhasha_app/providers/auth_provider.dart' as app_auth;
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sambhasha_app/screens/story/story_viewer_screen.dart';
+import 'package:sambhasha_app/widgets/shimmer_skeletons.dart';
 
 class StoryBar extends StatefulWidget {
   const StoryBar({super.key});
@@ -26,13 +26,14 @@ class _StoryBarState extends State<StoryBar> {
     final storyService = Provider.of<StoryService>(context, listen: false);
 
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return;
+    if (!mounted || pickedFile == null) return;
 
     setState(() => _isUploading = true);
 
     try {
       final bytes = await pickedFile.readAsBytes();
       final imageUrl = await databaseService.uploadImage(bytes, pickedFile.name);
+      if (!mounted) return;
 
       await storyService.uploadStory(
         name: userProvider.userModel?.name ?? 'User',
@@ -69,7 +70,7 @@ class _StoryBarState extends State<StoryBar> {
         stream: storyService.getActiveStories(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const SkeletonLoader(height: 80, width: double.infinity);
+            return const StoryBarSkeleton();
           }
 
           final stories = snapshot.data ?? [];
@@ -179,3 +180,4 @@ class _StoryBarState extends State<StoryBar> {
     );
   }
 }
+

@@ -32,6 +32,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
     final aiService = Provider.of<AIService>(context, listen: false);
     final response = await aiService.chatWithAssistant(userMsg);
 
+    if (!mounted) return;
     setState(() {
        _messages.add(AIMessage(text: response, isUser: false));
        _isLoading = false;
@@ -60,7 +61,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: AppBar(
-              backgroundColor: Colors.white.withOpacity(0.04),
+              backgroundColor: Colors.white.withValues(alpha: 0.04),
               elevation: 0,
               title: const Row(
                 children: [
@@ -82,9 +83,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-               Colors.blueAccent.withOpacity(0.05),
+               Colors.blueAccent.withValues(alpha: 0.05),
                Colors.black,
-               Colors.purpleAccent.withOpacity(0.05),
+               Colors.purpleAccent.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -121,14 +122,14 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         decoration: BoxDecoration(
-          color: msg.isUser ? Colors.blueAccent.withOpacity(0.2) : Colors.white.withOpacity(0.08),
+          color: msg.isUser ? Colors.blueAccent.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
             bottomLeft: msg.isUser ? const Radius.circular(16) : const Radius.circular(4),
             bottomRight: msg.isUser ? const Radius.circular(4) : const Radius.circular(16),
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Text(
           msg.text,
@@ -146,9 +147,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
               child: TextField(
                 controller: _controller,
@@ -182,3 +183,4 @@ class AIMessage {
   final bool isUser;
   AIMessage({required this.text, required this.isUser});
 }
+

@@ -19,8 +19,15 @@ class ChatProvider extends ChangeNotifier {
     required String text,
     required MessageType type,
     int? expiryDuration,
+    String? replyToId,
   }) async {
-    await _db.sendMessage(receiverId: receiverId, text: text, type: type, expiryDuration: expiryDuration);
+    await _db.sendMessage(
+      receiverId: receiverId,
+      text: text,
+      type: type,
+      expiryDuration: expiryDuration,
+      replyToId: replyToId,
+    );
   }
 
   // Send Group Message
@@ -112,13 +119,59 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  // Send Video
+  Future<void> sendVideo({
+    required String receiverId,
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    _isUploading = true;
+    notifyListeners();
+    try {
+      String videoUrl = await _db.uploadFile(bytes, fileName);
+      await _db.sendMessage(receiverId: receiverId, text: videoUrl, type: MessageType.video);
+    } catch (e) {
+      debugPrint("Error sending video message: $e");
+    } finally {
+      _isUploading = false;
+      notifyListeners();
+    }
+  }
+
+  // Send Voice Note
+  Future<void> sendVoiceNote({
+    required String receiverId,
+    required String filePath,
+  }) async {
+    _isUploading = true;
+    notifyListeners();
+    try {
+      String audioUrl = await _db.uploadAudio(filePath, "voice_msg.m4a");
+      await _db.sendMessage(receiverId: receiverId, text: audioUrl, type: MessageType.voice); 
+    } catch (e) {
+      debugPrint("Error sending voice note: $e");
+    } finally {
+      _isUploading = false;
+      notifyListeners();
+    }
+  }
+
+  // Message Management
+  Future<void> deleteMessage(String chatId, String messageId) async {
+    await _db.deleteMessage(chatId, messageId);
+  }
+
+  Future<void> editMessage(String chatId, String messageId, String newText) async {
+    await _db.editMessage(chatId, messageId, newText);
+  }
+
   // Mark all messages as read
   Future<void> markAsRead(String chatId) async {
     await _db.markAsRead(chatId);
   }
 
   // Individual Streams
-  Stream<List<MessageModel>> getMessages(String chatId) => _db.getMessages(chatId);
+  Stream<List<MessageModel>> getMessages(String chatId, {int limit = 50}) => _db.getMessages(chatId, limit: limit);
   Stream<DocumentSnapshot> getChatStream(String chatId) => _db.getChatStream(chatId);
   Stream<List<DocumentSnapshot>> getRecentChats() => _db.getRecentChats();
 
@@ -126,3 +179,4 @@ class ChatProvider extends ChangeNotifier {
   Stream<List<GroupModel>> getUserGroups() => _groupService.getUserGroups();
   Stream<List<MessageModel>> getGroupMessages(String groupId) => _groupService.getGroupMessages(groupId);
 }
+

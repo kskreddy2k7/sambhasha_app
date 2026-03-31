@@ -4,7 +4,6 @@ import 'package:sambhasha_app/models/user_model.dart';
 import 'package:sambhasha_app/services/auth_service.dart';
 import 'package:sambhasha_app/services/database_service.dart';
 import 'package:sambhasha_app/services/local_auth_service.dart';
-import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -37,10 +36,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _saveProfile(DatabaseService db) async {
     setState(() => _isSaving = true);
     await db.updateProfile(name: _nameController.text.trim());
-    if (mounted) setState(() {
-      _isSaving = false;
-      _isEditing = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isSaving = false;
+        _isEditing = false;
+      });
+    }
   }
 
   void _pickAndUploadImage(DatabaseService db) async {
@@ -114,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent.withOpacity(0.5)]),
+            gradient: LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent.withValues(alpha: 0.5)]),
           ),
           child: CircleAvatar(
             radius: 70,
@@ -243,3 +244,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

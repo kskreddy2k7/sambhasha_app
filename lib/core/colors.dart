@@ -11,3 +11,4 @@ class AppColors {
   static const Color bubbleMe = Colors.blueAccent;
   static const Color bubbleOther = Color(0xFF262626);
 }
+
