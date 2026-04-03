@@ -32,6 +32,14 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            force("com.google.android.gms:play-services-auth:21.0.0")
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
