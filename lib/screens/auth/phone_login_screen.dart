@@ -25,6 +25,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
 
     // Ensure phone starts with +
     if (!phone.startsWith('+')) {
+       if (!context.mounted) return;
        ScaffoldMessenger.of(context).showSnackBar(
          const SnackBar(content: Text("Include country code (e.g., +1)"))
        );
@@ -37,9 +38,12 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
         _verificationId = id;
         _codeSent = true;
       }),
-      onError: (err) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: Colors.redAccent),
-      ),
+      onError: (err) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.redAccent),
+        );
+      },
     );
   }
 

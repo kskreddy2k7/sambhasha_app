@@ -369,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: StreamBuilder<List<MessageModel>>(
                 stream: chatProvider.getMessages(_chatId, limit: _limit),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting && _limit == 50) {
+                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                     return const ChatListSkeleton();
                   }
                   final messages = snapshot.data ?? [];

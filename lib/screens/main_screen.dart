@@ -79,34 +79,34 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     final currentIndex = navProvider.currentIndex;
 
     final screens = [
-      const RecentChatsScreen(),
-      const DiscoverScreen(),
-      const AIAssistantScreen(),
+      RecentChatsScreen(),
+      DiscoverScreen(),
+      AIAssistantScreen(),
       ProfileScreen(uid: uid),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isWide = constraints.maxWidth > 800;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            bool isWide = constraints.maxWidth > 800;
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          extendBody: true,
-          body: Row(
-            children: [
-              if (isWide) _buildNavigationRail(navProvider, currentIndex),
-              Expanded(
-                child: IndexedStack(
-                  index: currentIndex,
-                  children: screens,
-                ),
+            return Scaffold(
+              backgroundColor: Colors.black,
+              extendBody: true,
+              body: Row(
+                children: [
+                  if (isWide) _buildNavigationRail(navProvider, currentIndex),
+                  Expanded(
+                    child: IndexedStack(
+                      index: currentIndex,
+                      children: screens,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          bottomNavigationBar: isWide ? null : _buildBottomBar(navProvider, currentIndex),
+              bottomNavigationBar: isWide ? null : _buildBottomBar(navProvider, currentIndex),
+            );
+          },
         );
-      },
-    );
   }
 
   Widget _buildNavigationRail(NavigationProvider navProvider, int currentIndex) {
@@ -130,28 +130,28 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             SizedBox(height: 40),
           ],
         ),
-        destinations: const [
-          NavigationRailDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: Text('Chats'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
-            label: Text('Discover'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.auto_awesome_outlined),
-            selectedIcon: Icon(Icons.auto_awesome),
-            label: Text('AI'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: Text('Profile'),
-          ),
-        ],
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.chat_bubble_outline),
+                    selectedIcon: Icon(Icons.chat_bubble),
+                    label: Text('Chats'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.explore_outlined),
+                    selectedIcon: Icon(Icons.explore),
+                    label: Text('Discover'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.auto_awesome_outlined),
+                    selectedIcon: Icon(Icons.auto_awesome),
+                    label: Text('AI'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.person_outline),
+                    selectedIcon: Icon(Icons.person),
+                    label: Text('Profile'),
+                  ),
+                ],
       ),
     );
   }

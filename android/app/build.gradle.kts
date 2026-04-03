@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.sai.sambhasa_app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.sai.sambhasa_app"

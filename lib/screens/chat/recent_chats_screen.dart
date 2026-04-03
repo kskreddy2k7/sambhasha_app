@@ -137,7 +137,7 @@ class _RecentChatsScreenState extends State<RecentChatsScreen> with SingleTicker
               StreamBuilder<List<DocumentSnapshot>>(
                 stream: chatProvider.getRecentChats(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                     return const ChatListSkeleton();
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
